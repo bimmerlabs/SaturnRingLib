@@ -335,7 +335,7 @@ namespace SRL
         
         /** @brief Bitfield recording all Scroll Screens That Disable transparent pixels
           */
-        inline static uint16_t TransparentScrolls = 0;
+        inline static uint16_t TransparentScrolls = SPRON;
 
         /** @brief Functionality available to all Scroll Screen interfaces
          */
