@@ -322,7 +322,7 @@ namespace SRL::Tilemap::Interfaces
             return this->info;
         }
 
-        /** @brief Copies a rectangular selection of Tilemap data between  2 pages in the tilemap
+        /** @brief Copies a rectangular selection of Tilemap data between 2 pages in the tilemap
         * @param sourcePage Index of the Tilemap Page to copy from
         * @param topLeft Page Coordinates of Top left of region to Copy
         * @param botRight Page Coordinates of Bottom Right of region Copy
@@ -334,7 +334,7 @@ namespace SRL::Tilemap::Interfaces
 
             // Check that requested page indicies exist in this map:
             if (!this->mapData || sourcePage >= this->numPages || destPage >= numPages)
-            {
+              {
                 return;
             }
 
@@ -488,10 +488,12 @@ namespace SRL::Tilemap::Interfaces
                 // Load file
                 uint8_t* imageData = (uint8_t*)(stream + 32);
                 uint32_t* headerData = (uint32_t*)stream;
+                
                 this->info.CellByteSize = headerData[1];
+              
                 uint32_t celSize = this->info.CellByteSize;
                 uint32_t mapSize = headerData[2];
-
+              
                 //decode color mode
                 switch (headerData[4])
                 {
