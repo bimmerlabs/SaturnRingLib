@@ -64,6 +64,21 @@ namespace SRL
             B0 = 2,
             B1 = 3,
         };
+        
+        /** @brief Used to set the minimum allowed scale for NBG0 and NBG1 scrolls
+        */
+        enum class ScaleLimit: uint16_t
+        {
+            /** @brief Set minimum scale to 1x (default) 
+             */
+            One = ZOOM_1,
+            /** @brief Set minimum scale to 1/2x
+             */
+            Half = ZOOM_HALF,
+            /** @brief Set minimum scale to 1/4x  
+             */
+            Quarter = ZOOM_QUARTER,
+        };
 
         /**  @brief converts an SRL TextureColorMode enum to its corresponding SGL macro for VDP2
          *   @param colorMode the colorMode to convert
@@ -106,9 +121,11 @@ namespace SRL
              */
             inline static int8_t bankCycles[4] = { -1,-1,-1,2 };//why will init to 0 not work?
 
-            /** @brief Indicates if map data has been stored in bank 0 by a previous allocation
+            /** @brief Indicates if map data has been stored in bank A0 by a previous allocation
              */ 
             inline static bool MapBankA0 = false;
+            /** @brief Indicates if map data has been stored in bank B0 by a previous allocation
+             */ 
             inline static bool MapBankB0 = false;
             
         public:
@@ -122,11 +139,11 @@ namespace SRL
             }
 
             /** @brief Linearly Allocates Vram in a bank and returns address to start of allocation. Allocation fails if
-            * there is not enough free space in the bank or if access requires too many cycles.
+            * there is not enough free space in the bank or if access requires too many cycle slots.
             * @param size Number of bytes to allocate
             * @param boundary Byte Boundary that the allocation should be aligned to (must be multiple of 32 for all VDP2 Data types)
             * @param bank The VRAM bank to allocate in
-            * @param cycles (Optional) Number of Bank Cycles this data will require to access during frame(0-8).
+            * @param cycles (Optional)The Number of Access Slots in a bank's Cycle Pattern that the data will require during display.
             * @return void* start of the Allocated region in VRAM (nullptr if allocation failed)
             * @note  Any VRAM padded to maintain alignment to a requested boundary is rendered inaccessible to further
             * allocations until VRAM is reset through VDP2::ClearVram().
@@ -572,11 +589,25 @@ namespace SRL
                 return Address;
             }
 
+            /** @brief Manually sets the CRAM palette index for this scrollScreen(Advanced Use Cases)
+             * @details Shallow copies the specified palette handler to the ScrollScreen's
+             * TilePalette, forcing it to register with the specified palette. Use in cases
+             * where the user desires more control over palette placement in CRAM, such as palette 
+             * sharing between tilemaps.
+             * @note when set this way, multiple sources may be able to write to the same palette.
+             * specify the LoadPalette parameter as false when using ScrollScreen::LoadTilemap() 
+             * to ensure pre-existing palette is not overwritten during loading. 
+            */
+            inline static void SetPalette(CRAM::Palette palette)
+            {
+                ScreenType::TilePalette = palette;
+            }
+
             /** @brief Registers the ScrollScreen to Display SRL's Debug Ascii Scroll
             *   @note  The Ascii Scroll is not compatible with Rotation Scroll RBG0
-            *   @note  The Ascii scroll data is stored outside The VRAM allocation region, so 
+            *   @note  The Ascii scroll data is stored outside The VRAM Alloacators memory region, so 
             *   should not be written with the ScrollScreen loading functions. Manage loading
-            *   fonts with the SRL::ASCII module instead. Furthermore, 
+            *   fonts with the SRL::ASCII module instead.
             */
             inline static void SetAsciiScroll()
             {
@@ -709,9 +740,10 @@ namespace SRL
             }
 
             /** @brief Set the Display Priority of a Scroll Screen
-             * @note Higher value layers display on top of lower layers.
-             * @note When 2 or more scroll screens are assigned the same layer, their priority resolves as
-             * SPRITE>RBG0>NBG0>NBG1>NBG2>NBG3.
+             * @note -Higher priority values display on top of lower priorities. Setting Priority::Layer0
+             * disables display of a scroll screen without unregistering it.
+             * @note -When 2 or more scroll screens are assigned the same layer, their priority resolves as
+             * SPRITE > RBG0 > NBG0 > NBG1 > NBG2 > NBG3.
              * @param pr The Priority Layer for the Scroll Screen
              */
             inline static void SetPriority(SRL::VDP2::Priority pr) { slPriority(ScreenType::ScreenID, (uint16_t)pr); }
@@ -872,8 +904,7 @@ namespace SRL
             *  @param bmp Pointer to the bitmap interface to load from.
             *  @note If source Bitmap size is not equal to one of the container sizes, excess VRAM will be wasted.
             *  To conserve VRAM, consider converting to tilemap format with Bmp2Tile for smaller images when possible.
-            *  @note RBG0 only supports the 512x256 and 512x512 containers. Because RBG0 does not need to reserve an extra bank
-            *  for map data in this mode, this is one case where using the bitmap format may save VRAM resources over tilemaps.
+            *  @note RBG0 only supports the 512x256 and 512x512 containers.
             */
             inline static void LoadBitmap(SRL::Bitmap::IBitmap* bmp, bool loadPalette = true)
             {
@@ -1010,7 +1041,6 @@ namespace SRL
                 else slBMPaletteNbg0(NBG0::TilePalette.GetId());
             }
 
-
             /** @brief Set the 2x2 grid of planes for the layer
              * @param a First plane
              * @param b Second plane
@@ -1023,13 +1053,25 @@ namespace SRL
              * @param pos Fixed Point X and Y Screen Position
              */
             static void SetPosition(Math::Vector2D& pos) { slScrPosNbg0(pos.X.RawValue(), pos.Y.RawValue()); }
-
+           
             /** @brief Sets the Scale of NBG0 Screen display
              *  @param scl Fixed Point X an Y scaling values
-             *  @note The minimum scale that can be displayed is determined by The Scale Limit, Scaling values
-             *  lower than the minimum will be clamped to the minimum
+             *  @note The minimum scale that can be displayed is determined by the Scale Limit , Scaling values
+             *  lower than the minimum will be clamped to the minimum (see SetScaleLimit() for more details)
              */
             static void SetScale(Math::Vector2D& scl) { slScrScaleNbg0(scl.X.RawValue(), scl.Y.RawValue()); }
+
+            /** @brief Sets the minimum scale that the ScrollScreen can display
+             *  @details NBG0 can scale its displayed tilemap or bitmap up freely, but has
+             *  a minimum default scale of 1x  due to cycle pattern limits.
+             *  This minimum can be changed to 1/2x or 1/4x for further reduction at the 
+             *  cost of increasing its required cycle accesses( By 2x for 1/2x scaling or 4x 
+             *  for 1/4x scaling)
+             *  @note -If the number of cycle access required for scaling is too large, it can interfere with 
+             *  registering scrolls for display with ScrollEnable().
+             *  @note -Only 8bpp and 4bpp data supports 1/2x scaling, and only 4bpp supports 1/4x scaling  
+             */
+            static void SetScaleLimit(VDP2::ScaleLimit limit){slZoomModeNbg0((uint16_t)limit); }
         };
 
         /** @brief NBG1 interface
@@ -1080,16 +1122,28 @@ namespace SRL
             static void SetPlanes(void* a, void* b, void* c, void* d) { slMapNbg1(a, b, c, d); }
 
             /** @brief Sets the Screen Position of NBG Scroll Screen
-             * @param pos Fixed Point X and Y Screen Position
+             * @param pos Fixed Point X and Y Offset of Scoll Position relative to screen
              */
             static void SetPosition(Math::Vector2D& pos) { slScrPosNbg1(pos.X.RawValue(), pos.Y.RawValue()); }
 
             /** @brief Sets the Scale of NBG1 Screen display
-             * @param scl Fixed Point X an Y scaling values
+             * @param scl Fixed Point X and Y scaling values
              * @note The minimum scale that can be displayed is determined by The Scale Limit, Scaling values
              * lower than the minimum will be clamped to the minimum
              */
             static void SetScale(Math::Vector2D& scl) { slScrScaleNbg1(scl.X.RawValue(), scl.Y.RawValue()); }
+            
+            /** @brief Sets the minimum scale that the ScrollScreen can display
+             *  @details NBG1 can scale its displayed tilemap or bitmap up freely, but has
+             *  a default minimum scale of 1x due to cycle pattern limits.
+             *  This minimum can be changed to 1/2x or 1/4x for further reduction at the 
+             *  cost of increasing its required cycle accesses( By 2x for 1/2x scaling or 4x 
+             *  for 1/4x scaling)
+             *  @note -If the number of cycle access required for scaling is too large, it can interfere with 
+             *  registering scrolls for display with ScrollEnable().
+             *  @note -Only 8bpp and 4bpp data supports 1/2x scaling, and only 4bpp supports 1/4x scaling  
+             */
+            static void SetScaleLimit(VDP2::ScaleLimit limit){slZoomModeNbg1((uint16_t)limit); }
         };
 
         /** @brief  NBG2 interface
@@ -1187,7 +1241,11 @@ namespace SRL
         };
 
         /** @brief Options for treating display of rotation parameters outside of the
-         * main tilemap/bitmap area 
+         * main tilemap/bitmap area.
+         * @details when 3d rotation is simulated, some perspectives may display
+         * areas on screen that are beyond the 4x4 plane area defined by the tilemap.
+         * Use these options with RBG0::SetOverDisplayA/B to specify what to display in 
+         * these areas.
         */
         enum class OverPattern
         {
@@ -1202,7 +1260,7 @@ namespace SRL
             */
             RepeatTile,
 
-            /** @brief Screen areas outside the tilemap are filled with transparent pixels
+            /** @brief Screen areas outside the tilemap are treated as transparent pixels
             */
             Transparent,
 
@@ -1226,7 +1284,7 @@ namespace SRL
             OnlyB = 1,
 
             /** @brief Switch RBG0 Tilemap display based on perspective
-             *  @details In regions of the screen beyond parameter A's 'simulated horizon'*,
+             *  @details In regions of the screen beyond parameter A's simulated 'horizon'*,
              *  Rotation parameter B will be displayed 
              *  @note *(More technically, any screen coordinate where the scaling coefficient
              *  data read for Parameter A is 0 will display Parameter B data instead). 
@@ -1247,10 +1305,13 @@ namespace SRL
          *      -Available features: Scrolling, Scaling, Rotation, 
          *      -Coefficient table allows per line and per pixel scaling
          *       to simulate perspective
+         *      -simulate up to 2 planes with secondary rotation parameters
          */
         class RBG0 : public BmpScreen<RBG0, scnRBG0, RBG0ON>
         {
         public:
+            using ScrollScreen<RBG0, scnRBG0, RBG0ON>::LoadTilemap;
+        
             /** @brief VRAM Address of RBG0 Coefficient table
              */
             inline static void* KtableAddress = (void*)(VDP2_VRAM_A0 - 1); 
@@ -1268,7 +1329,10 @@ namespace SRL
             inline static uint32_t MapAllocSizeB;
             /** @brief Size of Cell B allocation
             */
-            inline static uint32_t CellAllocSizeB;
+            inline static int32_t CellAllocSizeB;
+            /* @brief The Palette handler for LoadTilemapB
+            */
+            inline static CRAM::Palette TilePaletteB = CRAM::Palette();
 
             /** @brief Initializes the ScrollScreen's tilemap specifications
              * @param info Tile map info
@@ -1288,6 +1352,7 @@ namespace SRL
                 sl1MapRA(RBG0::MapAddress);
                 sl1MapRB(RBG0::MapAddress);
             }
+
             /** @brief Initializes the ScrollScreen's bitmap specifications
              * @param info bitmap info
              */
@@ -1306,6 +1371,10 @@ namespace SRL
                 else slBMPaletteRbg0(RBG0::TilePalette.GetId());
             }
 
+             /** @brief Initializes the Tilemap settings for Secondary Tilemap on Rotation parameter B
+             * @param info Tilemap info to initialize with
+             * @note Initialization fails if the tilemap's format does not match the primary tilemap
+             */
             inline static bool InitB(SRL::Tilemap::TilemapInfo info)
             {
                 if(info.MapMode!= RBG0::Info.MapMode || info.SGLColorMode()!=RBG0::Info.SGLColorMode()||info.CharSize!=RBG0::Info.CharSize)
@@ -1317,21 +1386,23 @@ namespace SRL
                 sl1MapRB(MapAddressRB);
                 return true;
             }
-            /** @brief Load a tilemap to be used with the secondary rotation parameters (B)
-             *  @details RBG0 can display 2 different tilemaps on screen with different 
+            
+           
+            /** @brief Load a tilemap to be used with the secondary rotation parameter (B)
+             *  @details RBG0 can display 2 different source tilemaps on screen with different 
              *  rotatation parameters - primary(designated as A) Which is loaded 
              *  with the standard LoadTilemap function, and secondary(designated as B), which is loaded
              *  with this function. These tilemaps can have their own independent 3d transforms and can 
-             *  display together in a frame in screen areas that do not overlap. 
-             *  @note Due to shared registers, The Secondary Tilemap must be in the same 
+             *  display together in a frame in independent screen areas that do not overlap. 
+             *  @note Due to shared registers, The Secondary Tilemap must be in the same        
              *  color mode as the Primary Tilemap and its data must be able to fit within the same
              *  Reserved VRAM banks as the corresponding primary data. Loading fails if these conditions are not met.
-             *  Always Load/ initialize  Primary tilemap A before loading data for secondary tilemap B
+             *  -Always Load/ initialize  Primary tilemap A before loading data for secondary tilemap B
              *  @param tilemap Itilemap to load with
              *  @param mode (Optional) specify how to switch between the Primary and Secondary Tilemap during display
              *  (default = PerspectiveSwitch)
              */ 
-            inline static void LoadTilemapB(SRL::Tilemap::ITilemap& tilemap, VDP2::SwitchMode mode = VDP2::SwitchMode::PerspectiveSwitch)
+            inline static void LoadTilemapB(SRL::Tilemap::ITilemap& tilemap, VDP2::SwitchMode mode = VDP2::SwitchMode::PerspectiveSwitch, bool LoadPalette = true)
             {
                 SRL::Tilemap::TilemapInfo info = tilemap.GetInfo();
                
@@ -1343,7 +1414,7 @@ namespace SRL
                     sz <<= 1;
                     page_sz <<= 1;
                 }
-
+                
                 if (info.PlaneSize == PL_SIZE_2x2) page_sz <<= 2;
                 else if (info.PlaneSize == PL_SIZE_2x1) page_sz <<= 1;
 
@@ -1366,13 +1437,61 @@ namespace SRL
                 }
                 
                 if(!InitB(info)) return;
+                int colorID = 0;
+                if (LoadPalette && info.ColorMode != SRL::CRAM::TextureColorMode::RGB555)
+                {
+                    if(RBG0::TilePaletteB.GetData()==nullptr)
+                    {
+                        if ((colorID = SRL::CRAM::GetFreeBank(RBG0::Info.ColorMode)) < 0)
+                        {
+                            SRL::Debug::Assert("Tilemap Palette Load Failed- no CRAM Palettes available");
+                            return;
+                        }
+                        SRL::CRAM::SetBankUsedState(colorID, RBG0::Info.ColorMode, true);
+                        RBG0::TilePaletteB = SRL::CRAM::Palette(RBG0::Info.ColorMode, colorID);      
+                    }
+                    uint16_t len = (info.ColorMode == SRL::CRAM::TextureColorMode::Paletted16) ? 16 : 256;
+                    RBG0::TilePaletteB.Load((Types::HighColor*)tilemap.GetPalData(), len);
+                }
+
                 RBG0::Cell2VRAM((uint8_t*)tilemap.GetCellData(), RBG0::CellAddressRB, info.CellByteSize);
                 RBG0::Map2VRAM(
                     info,
                     (uint16_t*)tilemap.GetMapData(),
                     RBG0::MapAddressRB,
-                    RBG0::TilePalette.GetId(),
+                    RBG0::TilePaletteB.GetId(),
                     RBG0::GetCellOffset(info, RBG0::CellAddressRB));
+            }
+            
+            /** @brief Simultaneously Configures the desired rotation mode and loads primary tilemap
+             *  @details This overload can be used to both load the primary tilemap and configure its rotation 
+             *  with one function. Calls SetRotationMode followed by LoadTilemap.
+             *  @param tilemap The tilemap to load 
+             *  @param mode The rotation mode to configure for the tilemap.(See SetRotationMode for details)
+             *  @param LoadPalette (optional) enable/disable auto loading of palette data (default = true)
+             */ 
+            inline static void LoadTilemap(SRL::Tilemap::ITilemap& tilemap,VDP2::RotationMode mode, bool LoadPalette = true)
+            {
+                SetRotationMode(mode);
+                LoadTilemap(tilemap,LoadPalette);
+            }
+            
+            /** @brief Load and configure both primary and secondary Tilemaps
+             *  @details This overload can be used to load and configure both primary and secondary tilemaps.
+             *  The SwitchMode will be initialized to UsePerspective. Use SetSwitchMode() after loading
+             *  to change the setting if desired.
+             *  @param tilemapA The tilemap to load to Primary Tilemap (A)
+             *  @param tilemapB The tilemap to load to Secondary Tilemap (B)
+             *  @param modeA The rotation mode to configure for primary map (RA)
+             *  @param modeB The rotation mode to configure for secondary map (RB)
+             *  @param LoadPalette (optional) set false to disable auto loading of palette data (default = true)
+             *  @note for details and restrictions on secondary map loading, see LoadTilemapB() 
+             */ 
+            inline static void LoadTilemap(SRL::Tilemap::ITilemap& tilemapA,SRL::Tilemap::ITilemap& tilemapB, VDP2::RotationMode modeA,VDP2::RotationMode modeB, bool LoadPalette = true)
+            {
+                SetRotationMode(modeA,modeB);
+                LoadTilemap(tilemapA,LoadPalette);
+                LoadTilemapB(tilemapB);
             }
 
             /** @brief Sets How screen regions outside the tilemap area are displayed in
@@ -1396,14 +1515,14 @@ namespace SRL
              */ 
             inline static void SetOverDisplayB(VDP2::OverPattern mode, uint16_t tileIndex = 0)
             {
-                slOverPatRA(tileIndex);
-                slOverRA((uint16_t)mode);
+                slOverPatRB(tileIndex);
+                slOverRB((uint16_t)mode);
             }
             /** @brief Sets Condition for displaying Primary and Secondary parameters/Tilemaps on screen.
              * @param mode the display mode to select
              * @note See SwitchMode documentation for description of available modes
              * @note If a mode is selected that displays Secondary Parameter (RB) but no
-             * tilemap has previously been loaded with LoadTilemapB, RB will use the same
+             * tilemap has previously been loaded to display on it, RB will use the same
              * source tilemap as primary parameter (RA)
              */ 
             inline static void SetParameterDisplay(SwitchMode mode)
@@ -1467,10 +1586,10 @@ namespace SRL
              * @param vblank (Optional) Chose to update VRAM at VBLANK to reduce amount of coefficient
              * data required for rotation of a plane (default = true)
              * @note when 2 or 3 axis rotation is selected, VRAM will be allocated to store
-             * necessary scaling coefficients. If Vblank is set false, all coefficients will be
-             * statically stored in VRAM as a 0x20000 byte table. If Vblank is set true, only the
-             * the coefficients for the current frame will be dynamically updated and
-             * written to VRAM at each Vblank, reducing VRAM footprint to 0x2000 bytes per
+             * necessary scaling coefficients. If Vblank is set false, all possible coefficients will be
+             * statically stored in VRAM as a 0x20000 byte table. If Vblank is set true, the
+             * the coefficients for the current frame will be dynamically written 
+             * to VRAM at each Vblank, reducing VRAM footprint to 0x2000 bytes per
              * rotation parameter but increasing required Vblank overhead. If the transfer can 
              * not complete within the Vblank window, screen tearing may be visible in the plane.
              */  
@@ -1577,6 +1696,7 @@ namespace SRL
              */
             static void SetPlanes(const uint8_t layout[4][4])
             {   
+                uint32_t offset = ((uint32_t)RBG0::MapAddress & 0x1ffff)>>11;
                 uint8_t sz = (VDP2::RBG0::Info.CharSize==CHAR_SIZE_1x1) ? 4:1;
                 uint8_t sLayout[4][4] = {};
                 if (VDP2::RBG0::Info.MapMode == PNB_2WORD) sz <<= 1;
@@ -1584,10 +1704,37 @@ namespace SRL
                 else if (VDP2::RBG0::Info.PlaneSize == PL_SIZE_2x1)sz <<= 1;
                 for (size_t i = 0; i < 4; ++i) { 
                     for (size_t j = 0; j < 4; ++j) { 
-                        sLayout[i][j] = layout[i][j] * sz;
+                        sLayout[i][j] = (layout[i][j] * sz)+(uint8_t)offset;
                     }
                 }
                 sl16MapRA((uint8_t*)sLayout);
+            }
+            /** @brief Sets the plane of Tilemap Data to be displayed with 16 planes for Tilemap B
+             * @details Unlike NBG scrolls RBG0 only loads with the default tiling of 1 plane. Use this
+             * function after loading to set the arrangement of multi plane tilemaps within a 4x4 grid:
+             *      |a,b,c,d|
+             *      |e,f,g,h|
+             *      |i,j,k,l|
+             *      |m,n,o,p|
+             * @param layout 4x4 array of uint8_t indices representing the index of each plane in the map layout
+             * @note No check is performed to ensure the indecies entered are within the bounds of
+             * the scroll's map data. Specifying indices larger than the number of planes loaded 
+             * will result in the diplay of garbage data in those portions of the map  
+             */
+            static void SetPlanesB(const uint8_t layout[4][4])
+            {   
+                uint32_t offset = ((uint32_t)RBG0::MapAddressRB & 0x1ffff)>>11;
+                uint8_t sz = (VDP2::RBG0::Info.CharSize==CHAR_SIZE_1x1) ? 4:1;
+                uint8_t sLayout[4][4] = {};
+                if (VDP2::RBG0::Info.MapMode == PNB_2WORD) sz <<= 1;
+                if (VDP2::RBG0::Info.PlaneSize == PL_SIZE_2x2)sz <<= 2;
+                else if (VDP2::RBG0::Info.PlaneSize == PL_SIZE_2x1)sz <<= 1;
+                for (size_t i = 0; i < 4; ++i) { 
+                    for (size_t j = 0; j < 4; ++j) { 
+                        sLayout[i][j] = (layout[i][j] * sz)+(uint8_t)offset;
+                    }
+                }
+                sl16MapRB((uint8_t*)sLayout);
             }
             
         };
@@ -1620,7 +1767,7 @@ namespace SRL
             Bank3 = scnSPR3,
             Bank4 = scnSPR4,
             Bank5 = scnSPR5,
-            Bank6 = scnSPR6,
+            Bank6 = scnSPR6, 
             Bank7 = scnSPR7,
         };
 
