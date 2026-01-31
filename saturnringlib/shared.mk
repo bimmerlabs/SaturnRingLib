@@ -39,7 +39,7 @@ copy_data_files:
 			cp -rf "$$dir." ./cd/data/; \
 		fi; \
 	done
-all: copy_data_files
+all: _data_files
 endif
 
 COBJECTS = $(SOURCES:.c=.o)
