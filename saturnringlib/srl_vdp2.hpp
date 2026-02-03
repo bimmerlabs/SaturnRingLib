@@ -8,11 +8,6 @@
 #include "srl_cd.hpp"
 #include "srl_tilemap_interfaces.hpp"
 
-/*I'm running into an issue with getting Bitmaps working for RBG0. Does anyone know 
-what SGL function if any is supposed to set the RAM contol register associated with reserving
-a bank in bitmaps case? None of the bitmap functions appear to set the bits. I can get it to work by 
-manually setting the bits in VDP2_RAMCTL system variable...
- */
 namespace SRL
 {
     /** @brief VDP2 control
@@ -939,7 +934,6 @@ namespace SRL
                         //handle 16 color palette mapping to the allowed banks
                         if(GetSGLColorMode(col) == 0) 
                         {
-                            SRL::Debug::Print(0,20,"4bpp");
                             for(int i = 0;i<8; ++i) 
                             {
                                 if(!SRL::CRAM::GetBankUsedState(i<<4, col))
@@ -958,7 +952,7 @@ namespace SRL
                         }
                         SRL::CRAM::SetBankUsedState(colorID, col, true);
                         ScreenType::TilePalette = SRL::CRAM::Palette(col, colorID);  
-                        //SRL::Debug::Print(0,21,"Pal: %d",(int)ScreenType::TilePalette.GetData()-VDP2_COLRAM);
+                       
                         ScreenType::TilePalette.Load(myInfo.Palette->Colors, myInfo.Palette->Count);    
                     }   
                     ScreenType::TilePalette.Load(myInfo.Palette->Colors, myInfo.Palette->Count);    
@@ -967,8 +961,8 @@ namespace SRL
             } 
 
             /** @brief Copies Bmp data to VRAM
-            * @param BmpData Data to copy.
-            * @param BmpAdr VRAM address to copy to.
+            * @param bmpData Source address of Data to copy.
+            * @param bmpAdr VRAM address to copy to.
             * @param info info about bmp 
             * @note When the source image does not completely fill the container the
             * transfer will pad each line of the image to allign to the container width.
@@ -1373,7 +1367,7 @@ namespace SRL
 
              /** @brief Initializes the Tilemap settings for Secondary Tilemap on Rotation parameter B
              * @param info Tilemap info to initialize with
-             * @note Initialization fails if the tilemap's format does not match the primary tilemap
+             * @note Initialization fails if the tilemap's data format does not match the primary tilemap
              */
             inline static bool InitB(SRL::Tilemap::TilemapInfo info)
             {
@@ -1464,7 +1458,7 @@ namespace SRL
             }
             
             /** @brief Simultaneously Configures the desired rotation mode and loads primary tilemap
-             *  @details This overload can be used to both load the primary tilemap and configure its rotation 
+             *  @details Overload to both load the primary tilemap and configure its rotation 
              *  with one function. Calls SetRotationMode followed by LoadTilemap.
              *  @param tilemap The tilemap to load 
              *  @param mode The rotation mode to configure for the tilemap.(See SetRotationMode for details)
@@ -1477,7 +1471,7 @@ namespace SRL
             }
             
             /** @brief Load and configure both primary and secondary Tilemaps
-             *  @details This overload can be used to load and configure both primary and secondary tilemaps.
+             *  @details Overload to load and configure both primary and secondary tilemaps.
              *  The SwitchMode will be initialized to UsePerspective. Use SetSwitchMode() after loading
              *  to change the setting if desired.
              *  @param tilemapA The tilemap to load to Primary Tilemap (A)
@@ -1485,7 +1479,7 @@ namespace SRL
              *  @param modeA The rotation mode to configure for primary map (RA)
              *  @param modeB The rotation mode to configure for secondary map (RB)
              *  @param LoadPalette (optional) set false to disable auto loading of palette data (default = true)
-             *  @note for details and restrictions on secondary map loading, see LoadTilemapB() 
+             *  @note for details and restrictions on secondary map loading, see RBG0::LoadTilemapB() 
              */ 
             inline static void LoadTilemap(SRL::Tilemap::ITilemap& tilemapA,SRL::Tilemap::ITilemap& tilemapB, VDP2::RotationMode modeA,VDP2::RotationMode modeB, bool LoadPalette = true)
             {
@@ -1852,10 +1846,10 @@ namespace SRL
         };
 
         /** @brief Clear all VDP2 VRAM allocations and reset all Scroll Screen VRAM References, as well
-         * as all CRAM allocations associated with VDP2 Scroll Screens
+         * as all CRAM allocations associated with VDP2 Scroll Screens if desired.
          * @note When Loading a new set of Data and Configurations for Scroll Screens with auto allocation, Call this first
          * to ensure old data is freed
-         * @param FreePalettes (optional: default = true) additionally free All CRAM pallets currently registered to ScrollScreens 
+         * @param FreePalettes (optional: default = true) additionally free all CRAM pallets currently registered to ScrollScreens 
          */
         inline static void ClearVRAM(bool FreePalettes = true)
         {
