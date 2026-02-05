@@ -11,8 +11,6 @@ namespace SampleModule
     class HelloWorld final
     {
     private:
-        /** @brief SMPC Commands
-        */
         static constexpr const char* privateMessage = "Good Bye!";
         
         static inline const char* getPrivateMessage()
@@ -21,8 +19,6 @@ namespace SampleModule
         }
 
     public:
-        /** @brief SMPC Commands
-        */
         static constexpr const char* publicMessage = "Hello World!";
         
         static void ShowMessage(bool showPrivateMessage = false)
