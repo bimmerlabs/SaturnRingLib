@@ -338,7 +338,7 @@ convert_audio_to_raw() { \
 		else \
 			sox "$$audiofile" -t raw -r 44100 -e signed-integer -b 16 -c 2 "$$rawfile"; \
 		fi; \
-		size=$$(stat -c%s "$$rawfile"); \
+		size=$$(stat -f%z "$$rawfile" 2>/dev/null || stat -c%s "$$rawfile"); \
 		target_sectors=$$((size / 2352)); \
 		if [ $$((size % 2352)) -ne 0 ]; then \
 			target_sectors=$$((target_sectors + 1)); \
@@ -359,8 +359,8 @@ endef
 add_audio_to_bin_cue: create_bin_cue
 	@$(CONVERT_AUDIO_TO_RAW); \
 	track=2; \
-	total_size=$$(stat -c%s "$(BUILD_BIN)"); \
-  sectors=$$((total_size / 2352)); \
+	total_size=$$(stat -f%z "$(BUILD_BIN)" 2>/dev/null || stat -c%s "$(BUILD_BIN)"); \
+ 	sectors=$$((total_size / 2352)); \
 	echo "Starting with $$total_size bytes ($$sectors sectors)"; \
 	# Find audio files and convert them to raw \
 	if [ -f "$(MUSIC_DIR)/tracklist" ]; then \
@@ -429,7 +429,7 @@ add_audio_to_bin_cue: create_bin_cue
 			exit 1; \
 		fi; \
 		echo '    INDEX 01' $$msf >> "$(BUILD_CUE)"; \
-		size=$$(stat -c%s "$$i"); \
+		size=$$(stat -f%z "$$i" 2>/dev/null || stat -c%s "$$i"); \
 		if [ $$((size % 2352)) -ne 0 ]; then \
 			echo "  ERROR: File $$i is not sector-aligned ($$size bytes)"; \
 			echo "  File size must be a multiple of 2352 bytes"; \
