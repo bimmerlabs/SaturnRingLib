@@ -120,7 +120,7 @@ namespace SRL
         }
 
          /**
-         * @brief Extension of snprintf with support of SRL::Math::Types::Fxp. Supported format especifiers %c , %s , %u , %d, and %f. %f is used for FXP types.
+         * @brief Extension of snprintf with support of SRL::Math::Types::Fxp. Supported format specifiers %c , %s , %u , %d, %x and %f. %f is used for FXP types. %0Nd where N is the total lenght of the printed number. If under N , the number will be padded with 0's until the printed string has N characters
          * @param buffer Buffer where the string will be written to
          * @param size maximum size of string to be written into buffer
          * @param format format string
