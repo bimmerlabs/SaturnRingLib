@@ -218,6 +218,21 @@ namespace SRL
                                 }
                             }
                         break;
+                        case 'x' : //hexadecimal
+                            {
+                                char tmp[100] = {0};
+                                int arg = va_arg(args, int);
+                                snprintf(tmp, 100, "%x", arg);
+                                for(int jdx = 0; tmp[jdx] != 0 ; jdx++ , writtenChars++)
+                                {
+                                    if(writtenChars < size)
+                                    {
+                                        buffer[writtenChars] = tmp[jdx];
+                                    }
+                                    
+                                }
+                            }
+                        break;
                         case 'u' : //unsigned int
                             {
                                 char tmp[100] = {0};
