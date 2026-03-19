@@ -347,17 +347,17 @@ namespace SRL::Types
             if (this != &other)
             {
                 // Steal resources from the source object
-                delete[] this->Vertices;
-                this->Vertices = other.Vertices;
-                this->VertexCount = other.VertexCount;
+                delete this->Attributes;
+                this->Attributes = other.Attributes;
 
-                delete[] this->Faces;
+                delete this->Faces;
                 this->Faces = other.Faces;
                 this->FaceCount = other.FaceCount;
 
-                delete[] this->Attributes;
-                this->Attributes = other.Attributes;
-
+                delete this->Vertices;
+                this->Vertices = other.Vertices;
+                this->VertexCount = other.VertexCount;
+                
                 // Reset the source object
                 other.Vertices = nullptr;
                 other.VertexCount = 0;
@@ -373,10 +373,20 @@ namespace SRL::Types
          */
         ~Mesh()
         {
-            // Release resources
-            delete[] this->Vertices;
-            delete[] this->Faces;
-            delete[] this->Attributes;
+            if (this->Attributes != nullptr)
+            {
+                delete this->Attributes;
+            }
+
+            if (this->Faces != nullptr)
+            {
+                delete this->Faces;
+            }
+
+            if (this->Vertices != nullptr)
+            {
+                delete this->Vertices;
+            }
         }
     };
 
@@ -485,10 +495,25 @@ namespace SRL::Types
         ~SmoothMesh()
         {
             // Release resources
-            delete[] this->Vertices;
-            delete[] this->Faces;
-            delete[] this->Attributes;
-            delete[] this->Normals;
+            if (this->Normals != nullptr)
+            {
+                delete[] this->Normals;
+            }
+
+            if (this->Attributes != nullptr)
+            {
+                delete[] this->Attributes;
+            }
+
+            if (this->Faces != nullptr)
+            {
+                delete[] this->Faces;
+            }
+
+            if (this->Vertices != nullptr)
+            {
+                delete[] this->Vertices;
+            }
         }
     };
 }
