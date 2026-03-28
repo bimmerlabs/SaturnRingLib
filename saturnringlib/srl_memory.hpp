@@ -673,7 +673,7 @@ namespace SRL
             static size_t GetFreeSpace()
             {
                 #if defined(USE_TLSF_ALLOCATOR)
-                return 0;
+                return Memory::GetTlsfReport(LowWorkRam::zone).FreeSize;
                 #else
                 return Memory::SimpleMalloc::GetReport(LowWorkRam::zone).FreeSize;
                 #endif
@@ -685,7 +685,7 @@ namespace SRL
             static const Report GetReport()
             {
                 #if defined(USE_TLSF_ALLOCATOR)
-                return Report { 0, 0, 0, LowWorkRam::zone.Size, 0};
+                return Memory::GetTlsfReport(LowWorkRam::zone);
                 #else
                 return Memory::SimpleMalloc::GetReport(LowWorkRam::zone);
                 #endif
@@ -705,11 +705,11 @@ namespace SRL
             static size_t GetUsedSpace()
             {
                 #if defined(USE_TLSF_ALLOCATOR)
-                return 0;
+                auto report = Memory::GetTlsfReport(LowWorkRam::zone);
                 #else
                 auto report = Memory::SimpleMalloc::GetReport(LowWorkRam::zone);
-                return report.TotalSize - report.FreeSize;
                 #endif
+                return report.TotalSize - report.FreeSize;
             }
         };
 
