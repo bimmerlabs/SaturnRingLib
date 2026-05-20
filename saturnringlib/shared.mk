@@ -170,6 +170,13 @@ else
 	SYSFLAGS += -DSGL_MAX_WORKS=256
 endif
 
+# Set slave command buffer size, use 70k by default, should be aligned to 0x10
+ifneq ($(strip ${SGL_SLAVE_BUF_SIZE}),)
+	SYSFLAGS += -DSGL_SLAVE_BUF_SIZE=$(strip ${SGL_SLAVE_BUF_SIZE})
+else
+	SYSFLAGS += -DSGL_SLAVE_BUF_SIZE=71680
+endif
+
 # Add custom FLAGS
 ifneq ($(strip ${SRL_CUSTOM_CCFLAGS}),)
 	CCFLAGS += $(strip ${SRL_CUSTOM_CCFLAGS})
