@@ -868,21 +868,21 @@ MU_TEST(timer_diagnostic_overflow)
     // PHI_8 @ ~28MHz: overflow every ~18.4ms
     // PHI_128 @ ~28MHz: overflow every ~295ms
     // 500000 NOPs should be well over 20ms
-    for (volatile int i = 0; i < 500000; i++) { __asm__ volatile("nop"); }
+    for (int i = 0; i < 500000; i++) { __asm__ volatile("nop"); }
 
     uint16_t frc1 = *frcPtr;
     uint8_t tcsr1 = *tcsrPtr;
     uint32_t t32_1 = SRL::TimerTest::GetTimer32();
 
     // Wait again
-    for (volatile int i = 0; i < 500000; i++) { __asm__ volatile("nop"); }
+    for (int i = 0; i < 500000; i++) { __asm__ volatile("nop"); }
 
     uint16_t frc2 = *frcPtr;
     uint8_t tcsr2 = *tcsrPtr;
     uint32_t t32_2 = SRL::TimerTest::GetTimer32();
 
     // Wait a third time
-    for (volatile int i = 0; i < 500000; i++) { __asm__ volatile("nop"); }
+    for (int i = 0; i < 500000; i++) { __asm__ volatile("nop"); }
 
     uint16_t frc3 = *frcPtr;
     uint8_t tcsr3 = *tcsrPtr;
