@@ -22,6 +22,14 @@ Close Kronos, everything shall be setup at that point.
 
 Execute `make all` within the `SaturnRingLib/Tests` directory from a terminal.
 
+You can override makefile defaults at build time. For example, to change the log output target:
+
+```bash
+make all SRL_LOG_OUTPUT=DEV_CART
+```
+
+Other valid values: `EMULATOR`, `DEV_CART`, `NONE`.
+
 ## Run the tests
 
 Execute `run_tests.bat` within the `SaturnRingLib/Tests` directory from a terminal, tests results will be output in both the terminal and `SaturnRingLib/Tests/uts.log`, such as:
@@ -45,3 +53,21 @@ INFO : ***UT_END***
 ````
 
 Note : Changing SRL_LOG_LEVEL from INFO to TRACE in the makefile will make an output for every single tests.
+
+## USBGamers (real hardware)
+
+The `USBGamers` mode in `run_tests.bat` pushes the test binary to a USBGamers cartridge using `ftx`.
+
+### Requirements
+
+- USBGamers cartridge connected to the Saturn.
+- `ftx` tool available in your PATH.
+- `usbreset` tool available in your PATH (used to reset the USB device).
+
+### Run
+
+1. Build tests with `make all`.
+2. Run `./run_tests.bat USBGamers`.
+
+The script resets the USB device, uploads `cd/data/0.bin` to address `0x06004000`, and then starts the capture flow.
+The output still goes to `uts.log` like the emulator runs.
