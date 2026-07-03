@@ -707,8 +707,9 @@ MU_TEST(timer_current_tickstamp_accessor)
     const SRL::Tickstamp& current = SRL::Timer::CurrentTickstamp();
 
     // Verify it's a valid Tickstamp (not garbage)
-    mu_assert(current.High >= 0, "CurrentTickstamp should have valid High value");
-    mu_assert(current.Low >= 0, "CurrentTickstamp should have valid Low value");
+    // @comment : current.High and current.Low are unsigned, so they are always >= 0
+    //mu_assert(current.High >= 0, "CurrentTickstamp should have valid High value");
+    //mu_assert(current.Low >= 0, "CurrentTickstamp should have valid Low value");
 
     // Verify it's the same as what DeltaTicks is based on (both from frameSnapshot)
     const SRL::Tickstamp& delta = SRL::Timer::DeltaTicks();
