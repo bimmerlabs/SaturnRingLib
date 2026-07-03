@@ -74,7 +74,6 @@ extern "C"
  */
 MU_TEST(timer_tickstamp_construction)
 {
-    timer_test_output_header();
     SRL::Tickstamp ts1{};
     SRL::Tickstamp ts2 = SRL::Tickstamp::FromTicks(0x123456789ULL);
 
@@ -93,7 +92,6 @@ MU_TEST(timer_tickstamp_construction)
  */
 MU_TEST(timer_tickstamp_subtraction_basic)
 {
-    timer_test_output_header();
     // Simple subtraction test - just verify it doesn't crash
     auto a = SRL::Tickstamp::FromTicks(1000);
     auto b = SRL::Tickstamp::FromTicks(500);
@@ -113,7 +111,6 @@ MU_TEST(timer_tickstamp_subtraction_basic)
  */
 MU_TEST(timer_tickstamp_subtraction_equal)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(0x123456789ULL);
     auto b = SRL::Tickstamp::FromTicks(0x123456789ULL);
     auto result = a - b;
@@ -130,7 +127,6 @@ MU_TEST(timer_tickstamp_subtraction_equal)
  */
 MU_TEST(timer_tickstamp_subtraction_no_borrow)
 {
-    timer_test_output_header();
     // Simple subtraction test with larger values
     auto a = SRL::Tickstamp::FromTicks(10000);
     auto b = SRL::Tickstamp::FromTicks(1000);
@@ -149,7 +145,6 @@ MU_TEST(timer_tickstamp_subtraction_no_borrow)
  */
 MU_TEST(timer_tickstamp_to_seconds)
 {
-    timer_test_output_header();
     // At ~26.8-28.6 MHz / 2 (timer runs at /2), we get roughly 13-14 million ticks/sec
     // In PHI_128 mode, it's approximately 110000-112000 ticks/sec
     // We'll test that non-zero ticks produce positive seconds
@@ -172,7 +167,6 @@ MU_TEST(timer_tickstamp_to_seconds)
  */
 MU_TEST(timer_tickstamp_to_milliseconds)
 {
-    timer_test_output_header();
     SRL::Tickstamp ts = MakeTickstamp(1000000);
 
     Fxp seconds = ts.ToSeconds();
@@ -194,7 +188,6 @@ MU_TEST(timer_tickstamp_to_milliseconds)
  */
 MU_TEST(timer_elapsed_time_conversion)
 {
-    timer_test_output_header();
     SRL::Tickstamp start = MakeTickstamp(0);
     SRL::Tickstamp end = MakeTickstamp(1000000);
     SRL::Tickstamp elapsed = end - start;
@@ -218,7 +211,6 @@ MU_TEST(timer_elapsed_time_conversion)
  */
 MU_TEST(timer_update_and_delta_variables)
 {
-    timer_test_output_header();
     // Initialize timer hardware first
     TimerTest::Init();
     
@@ -251,7 +243,6 @@ MU_TEST(timer_update_and_delta_variables)
  */
 MU_TEST(timer_precision_monotonicity)
 {
-    timer_test_output_header();
 
     // Small value
     SRL::Tickstamp ts1 = MakeTickstamp(1);
@@ -279,7 +270,6 @@ MU_TEST(timer_precision_monotonicity)
  */
 MU_TEST(timer_clock_mode_override)
 {
-    timer_test_output_header();
 
     // Same tick count at both frequencies
     SRL::Tickstamp ts = MakeTickstamp(1000000);
@@ -314,7 +304,6 @@ MU_TEST(timer_clock_mode_override)
  */
 MU_TEST(timer_edge_case_precision)
 {
-    timer_test_output_header();
 
     // Test case 1: Very small values (1 tick)
     SRL::Tickstamp ts1 = MakeTickstamp(1);
@@ -340,7 +329,6 @@ MU_TEST(timer_edge_case_precision)
  */
 MU_TEST(timer_tickstamp_48bit_range)
 {
-    timer_test_output_header();
 
     // Test 48-bit subtraction using FromTicks
     // ts1: 0x123456780000 (High=0x12345678, Low=0x00000000)
@@ -360,7 +348,6 @@ MU_TEST(timer_tickstamp_48bit_range)
  */
 MU_TEST(timer_tickstamp_composition)
 {
-    timer_test_output_header();
 
     // Create using FromTicks: 0x0000000500003039
     // High = ticks >> 16 = 0x000000050000
@@ -380,7 +367,6 @@ MU_TEST(timer_tickstamp_composition)
  */
 MU_TEST(timer_tickstamp_to_minutes)
 {
-    timer_test_output_header();
     // Use larger tick count to get meaningful minute values
     SRL::Tickstamp ts = MakeTickstamp(500000000);  // ~500 million ticks
 
@@ -403,7 +389,6 @@ MU_TEST(timer_tickstamp_to_minutes)
  */
 MU_TEST(timer_tickstamp_to_clock)
 {
-    timer_test_output_header();
     // ~5 minutes worth of ticks (adjust based on clock frequency)
     SRL::Tickstamp ts = MakeTickstamp(30000000);  // 30M ticks ≈ few seconds to minutes
 
@@ -424,7 +409,6 @@ MU_TEST(timer_tickstamp_to_clock)
  */
 MU_TEST(timer_delta_minutes)
 {
-    timer_test_output_header();
     TimerTest::Init();
 
     // Run a few updates to get measurable deltas
@@ -452,7 +436,6 @@ MU_TEST(timer_delta_minutes)
  */
 MU_TEST(timer_multiple_updates)
 {
-    timer_test_output_header();
     TimerTest::Init();
 
     // First update
@@ -479,7 +462,6 @@ MU_TEST(timer_multiple_updates)
  */
 MU_TEST(timer_tickstamp_edge_subtraction)
 {
-    timer_test_output_header();
 
     // Test subtraction resulting in zero (most important case)
     auto c = SRL::Tickstamp::FromTicks(0x123456789ULL);
@@ -503,7 +485,6 @@ MU_TEST(timer_tickstamp_edge_subtraction)
  */
 MU_TEST(timer_tickstamp_addition_basic)
 {
-    timer_test_output_header();
     // Simple addition test
     auto a = SRL::Tickstamp::FromTicks(500);
     auto b = SRL::Tickstamp::FromTicks(500);
@@ -523,7 +504,6 @@ MU_TEST(timer_tickstamp_addition_basic)
  */
 MU_TEST(timer_tickstamp_addition_carry)
 {
-    timer_test_output_header();
     // Test that carry propagates to High when Low overflows
     // Low max is 0xFFFF0000, so adding to trigger carry
     auto a = SRL::Tickstamp::FromTicks(0xFFFF);
@@ -542,7 +522,6 @@ MU_TEST(timer_tickstamp_addition_carry)
  */
 MU_TEST(timer_tickstamp_equality)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(0x123456789ULL);
     auto b = SRL::Tickstamp::FromTicks(0x123456789ULL);
     auto c = SRL::Tickstamp::FromTicks(0x123456788ULL);
@@ -559,7 +538,6 @@ MU_TEST(timer_tickstamp_equality)
  */
 MU_TEST(timer_tickstamp_inequality)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(0x123456789ULL);
     auto b = SRL::Tickstamp::FromTicks(0x123456789ULL);
     auto c = SRL::Tickstamp::FromTicks(0x123456788ULL);
@@ -577,7 +555,6 @@ MU_TEST(timer_tickstamp_inequality)
  */
 MU_TEST(timer_tickstamp_less_than)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(1000);
     auto b = SRL::Tickstamp::FromTicks(2000);
     auto c = SRL::Tickstamp::FromTicks(0x10001000ULL);  // High=0x1000, Low=0x10000000
@@ -597,7 +574,6 @@ MU_TEST(timer_tickstamp_less_than)
  */
 MU_TEST(timer_tickstamp_greater_than)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(1000);
     auto b = SRL::Tickstamp::FromTicks(2000);
 
@@ -613,7 +589,6 @@ MU_TEST(timer_tickstamp_greater_than)
  */
 MU_TEST(timer_tickstamp_less_than_or_equal)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(1000);
     auto b = SRL::Tickstamp::FromTicks(1000);
     auto c = SRL::Tickstamp::FromTicks(2000);
@@ -631,7 +606,6 @@ MU_TEST(timer_tickstamp_less_than_or_equal)
  */
 MU_TEST(timer_tickstamp_greater_than_or_equal)
 {
-    timer_test_output_header();
     auto a = SRL::Tickstamp::FromTicks(1000);
     auto b = SRL::Tickstamp::FromTicks(1000);
     auto c = SRL::Tickstamp::FromTicks(2000);
@@ -649,7 +623,6 @@ MU_TEST(timer_tickstamp_greater_than_or_equal)
  */
 MU_TEST(timer_conversion_consistency)
 {
-    timer_test_output_header();
 
     SRL::Tickstamp ts = MakeTickstamp(10000000);
 
@@ -673,7 +646,6 @@ MU_TEST(timer_conversion_consistency)
  */
 MU_TEST(timer_hardware_integration)
 {
-    timer_test_output_header();
     // Initialize timer hardware
     TimerTest::Init();
 
@@ -704,7 +676,6 @@ MU_TEST(timer_hardware_integration)
  */
 MU_TEST(timer_initialization)
 {
-    timer_test_output_header();
 
     TimerTest::Init();
 
@@ -728,7 +699,6 @@ MU_TEST(timer_initialization)
  */
 MU_TEST(timer_current_tickstamp_accessor)
 {
-    timer_test_output_header();
 
     TimerTest::Init();
     TimerTest::Update();
@@ -761,7 +731,6 @@ MU_TEST(timer_current_tickstamp_accessor)
  */
 MU_TEST(timer_from_seconds_builder)
 {
-    timer_test_output_header();
 
     // Test at 26MHz
     SRL::TimerTest::OverrideDivider(true);
@@ -788,7 +757,6 @@ MU_TEST(timer_from_seconds_builder)
  */
 MU_TEST(timer_from_milliseconds_builder)
 {
-    timer_test_output_header();
 
     // Test at 26MHz
     SRL::TimerTest::OverrideDivider(true);
@@ -817,7 +785,6 @@ MU_TEST(timer_from_milliseconds_builder)
  */
 MU_TEST(timer_from_minutes_builder)
 {
-    timer_test_output_header();
 
     // Test at 26MHz
     SRL::TimerTest::OverrideDivider(true);
@@ -843,7 +810,6 @@ MU_TEST(timer_from_minutes_builder)
  */
 MU_TEST(timer_diagnostic_overflow)
 {
-    timer_test_output_header();
 
     // Initialize timer
     TimerTest::Init();
