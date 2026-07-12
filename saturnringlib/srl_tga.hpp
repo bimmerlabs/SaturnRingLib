@@ -832,7 +832,6 @@ namespace SRL::Bitmap
 
             if (this->palette != nullptr)
             {
-                delete this->palette->Colors;
                 delete this->palette;
             }
         }
