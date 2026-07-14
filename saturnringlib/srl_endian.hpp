@@ -39,4 +39,4 @@ namespace SRL::Endian
     {
         return (*(buf + 3) << 24) | (*(buf + 2) << 16) | (*(buf + 1) << 8) | *(buf);
     }
-}
+} // namespace SRL::Endian
