@@ -12,7 +12,7 @@ namespace SRL
 {
 
     /** @brief Logger namespace that holds the logger functionality.
-     * 
+     *
      * @details This namespace provides a compile-time configurable logging system.
      *          Logs can be directed to different outputs (DevCart USB, Emulator MMIO, or none).
      *          Log levels filter messages at compile-time for efficiency.
@@ -23,10 +23,10 @@ namespace SRL
     namespace Logger
     {
         /** @brief LogLevels enumeration.
-     * 
-     * @details Defines severity levels for log messages. Lower values = more verbose.
-     *          Filtering is done at compile-time via MinLevel.
-     */
+         *
+         * @details Defines severity levels for log messages. Lower values = more verbose.
+         *          Filtering is done at compile-time via MinLevel.
+         */
         enum class LogLevels : uint8_t
         {
             /** @brief TRACE: Detailed code flow tracing (debug builds only). */
@@ -49,7 +49,7 @@ namespace SRL
         };
 
         /** @brief LogOutputs enumeration.
-         * 
+         *
          * @details Defines possible output sinks for log messages.
          */
         enum class LogOutputs : uint8_t
@@ -65,7 +65,7 @@ namespace SRL
         };
 
         /** @brief DummyLogger class.
-         * 
+         *
          * @details A no-op logger used when output is disabled or as fallback.
          *          All operations are optimized out by compiler.
          */
@@ -99,7 +99,7 @@ namespace SRL
         };
 
         /** @brief EmulatorLogger class.
-         * 
+         *
          * @details Logs to emulator via MMIO write to a fixed address (Kronos console emulation).
          *          Single-byte writes; inefficient but functional for debug.
          */
@@ -142,7 +142,7 @@ namespace SRL
         };
 
         /** @brief DevCartLogger class.
-         * 
+         *
          * @details Logs to USB DevCart via SRL::DevCart::CS0::write (byte-by-byte USB FIFO).
          *          No internal buffering; relies on DevCart FIFO.
          */
@@ -168,14 +168,14 @@ namespace SRL
              */
             static void putc(const char c)
             {
-                putc(&c);   
+                putc(&c);
             }
 
             /** @brief Write single byte to DevCart USB FIFO.
              *  @param c Pointer to byte (writes only first).
              *  Note: Casts to uint8_t* for DevCart::write; may block if FIFO full.
              */
-            static void putc(const char * c)
+            static void putc(const char *c)
             {
                 SRL::DevCart::CS0::write(reinterpret_cast<const uint8_t *>(c));
             }
@@ -196,11 +196,11 @@ namespace SRL
         static constexpr SRL::Logger::LogOutputs LogOutput = SRL::Logger::LogOutputs::NONE;
 #else
         // Macro to stringify and select enum value
-        #define Stringify(U) SRL::Logger::LogOutputs::U
+    #define Stringify(U) SRL::Logger::LogOutputs::U
 
         /** @brief Configured output target (e.g., DEV_CART). */
         static constexpr SRL::Logger::LogOutputs LogOutput = Stringify(SRL_LOG_OUTPUT);
-        #undef Stringify
+    #undef Stringify
 #endif
 
         // Select logger type at compile-time based on LogOutput
@@ -219,7 +219,7 @@ namespace SRL
             "Invalid SRL_LOG_OUTPUT value: Must be DEV_CART, EMULATOR, or NONE");
 
         /** @brief Log class.
-         * 
+         *
          * @details Core logging facade. Uses templates for level-based filtering and output selection.
          *          All operations are inline and constexpr where possible for zero runtime cost when filtered.
          */
@@ -240,10 +240,10 @@ namespace SRL
             /** @brief Default min level if SRL_LOG_LEVEL undefined: NONE. */
             static constexpr SRL::Logger::LogLevels MinLevel = SRL::Logger::LogLevels::NONE;
 #else
-            #define Stringify(U) SRL::Logger::LogLevels::U
+    #define Stringify(U) SRL::Logger::LogLevels::U
             /** @brief Configured minimum level (e.g., INFO). */
             static constexpr SRL::Logger::LogLevels MinLevel = Stringify(SRL_LOG_LEVEL);
-            #undef Stringify
+    #undef Stringify
 #endif
 
             // Static assert for valid level (optional: add if needed)
@@ -259,7 +259,9 @@ namespace SRL
                 /** @brief Constructor with level.
                  *  @param aLevel The log level to wrap.
                  */
-                constexpr explicit LogLevelHelper(SRL::Logger::LogLevels aLevel) : lvl(aLevel) {}
+                constexpr explicit LogLevelHelper(SRL::Logger::LogLevels aLevel) :
+                    lvl(aLevel)
+                {}
 
                 /** @brief Cast to enum value. */
                 constexpr operator SRL::Logger::LogLevels() const { return lvl; }
@@ -333,7 +335,7 @@ namespace SRL
                         Output::putc(s++);
 
                     // Append newline if missing
-                    if ((uint8_t)*(s - 1) != '\n')
+                    if ((uint8_t) * (s - 1) != '\n')
                     {
                         Output::putc('\n');
                     }
