@@ -19,21 +19,21 @@ namespace SRL::Types
     };
 
     /** @brief Checks if the given access mode is readable.
-     *  @param m The access mode to test.
+     *  @param mode The access mode to test.
      *  @return True if the access mode allows reading.
      */
-    constexpr inline bool isReadable(AccessMode m) noexcept
+    constexpr inline bool IsReadable(AccessMode mode) noexcept
     {
-        return (m == AccessMode::Read) || (m == AccessMode::ReadWrite);
+        return (mode == AccessMode::Read) || (mode == AccessMode::ReadWrite);
     }
 
     /** @brief Checks if the given access mode is writable.
-     *  @param m The access mode to test.
+     *  @param mode The access mode to test.
      *  @return True if the access mode allows writing.
      */
-    constexpr inline bool isWritable(AccessMode m) noexcept
+    constexpr inline bool IsWritable(AccessMode mode) noexcept
     {
-        return (m == AccessMode::Write) || (m == AccessMode::ReadWrite);
+        return (mode == AccessMode::Write) || (mode == AccessMode::ReadWrite);
     }
 
     /**
@@ -53,32 +53,32 @@ namespace SRL::Types
     {
         /** @brief Compile-time access mode.
          */
-        static constexpr AccessMode access = Mode;
+        static constexpr AccessMode Access = Mode;
 
         /** @brief Base address of the region.
          */
-        const uintptr_t address = Address;
+        const uintptr_t AddressVal = Address;
 
         /** @brief Size of the region in bytes.
          */
-        const size_t size = Size;
+        const size_t SizeVal = Size;
 
         /**
          * @brief Checks if the register is readable.
          * @return true if the register has read access.
          */
-        constexpr bool isReadable() const noexcept
+        constexpr bool IsReadable() const noexcept
         {
-            return SRL::Types::isReadable(Mode);
+            return SRL::Types::IsReadable(Mode);
         }
 
         /**
          * @brief Checks if the register is writable.
          * @return true if the register has write access.
          */
-        constexpr bool isWritable() const noexcept
+        constexpr bool IsWritable() const noexcept
         {
-            return SRL::Types::isWritable(Mode);
+            return SRL::Types::IsWritable(Mode);
         }
 
         /** @brief Construct a new Register with address and size.
@@ -86,27 +86,27 @@ namespace SRL::Types
          *  @param sz Size of the region in bytes.
          */
         constexpr explicit Register(uintptr_t adr, size_t sz) noexcept :
-            address(adr),
-            size(sz)
+            AddressVal(adr),
+            SizeVal(sz)
         {}
 
         /**
          * @brief Get the base address of the region.
          * @return Base address.
          */
-        constexpr uintptr_t getAddress() const noexcept { return address; }
+        constexpr uintptr_t GetAddress() const noexcept { return AddressVal; }
 
         /**
          * @brief Get the size of the region in bytes.
          * @return Size in bytes.
          */
-        constexpr size_t getSize() const noexcept { return size; }
+        constexpr size_t GetSize() const noexcept { return SizeVal; }
 
         /**
          * @brief Get the compile-time access mode for this Register instance.
          * @return Access mode.
          */
-        constexpr AccessMode getAccess() const noexcept { return access; }
+        constexpr AccessMode GetAccess() const noexcept { return Access; }
 
         /**
          * @brief If this Register was instantiated with AccessMode::Read,
@@ -119,11 +119,11 @@ namespace SRL::Types
          * @return Number of bytes copied.
          */
         template <AccessMode M = Mode, typename std::enable_if_t<(M == AccessMode::Read) || (M == AccessMode::ReadWrite), int> = 0>
-        inline size_t data(void *dest) const noexcept
+        inline size_t Data(void *dest) const noexcept
         {
-            const uint8_t *src = reinterpret_cast<const uint8_t *>(address);
-            memcpy(dest, src, size);
-            return size; // number of bytes copied (region size)
+            const uint8_t *src = reinterpret_cast<const uint8_t *>(AddressVal);
+            memcpy(dest, src, SizeVal);
+            return SizeVal; // number of bytes copied (region size)
         }
 
         /**
@@ -136,11 +136,11 @@ namespace SRL::Types
          * @return Number of bytes written.
          */
         template <AccessMode M = Mode, typename std::enable_if_t<(M == AccessMode::Write) || (M == AccessMode::ReadWrite), int> = 0>
-        inline size_t set(const void *src) const noexcept
+        inline size_t Set(const void *src) const noexcept
         {
             // Copy from src into the region address
-            memcpy(reinterpret_cast<void *>(address), src, size);
-            return size; // number of bytes written
+            memcpy(reinterpret_cast<void *>(AddressVal), src, SizeVal);
+            return SizeVal; // number of bytes written
         }
 
         /** @brief Disallow default construction.
