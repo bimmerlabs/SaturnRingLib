@@ -5,7 +5,6 @@
 #include <cstddef> // For size_t
 #include <cstdint> // For uintptr_t, size_t, uint8_t, uint32_t
 #include <initializer_list>
-#include <srl_register.hpp>
 
 /** @brief Namespace for interacting with a USB development cartridge for the Sega Saturn
  * This provides access to registers for USB communication
