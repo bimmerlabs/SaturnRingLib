@@ -9,32 +9,38 @@
 namespace SRL::Types
 {
     /**
-     * @brief Access mode for a Register.
+     * @brief Base structure for Register containing non-templated static helper functions.
      */
-    enum class AccessMode : uint8_t
+    struct RegisterBase
     {
-        Read,     //!< Read-only
-        Write,    //!< Write-only
-        ReadWrite //!< Read/Write
+        /**
+         * @brief Access mode for a Register.
+         */
+        enum class AccessMode : uint8_t
+        {
+            Read,     //!< Read-only
+            Write,    //!< Write-only
+            ReadWrite //!< Read/Write
+        };
+
+        /** @brief Checks if the given access mode is readable.
+         *  @param mode The access mode to test.
+         *  @return True if the access mode allows reading.
+         */
+        static constexpr bool IsReadable(AccessMode mode) noexcept
+        {
+            return (mode == AccessMode::Read) || (mode == AccessMode::ReadWrite);
+        }
+
+        /** @brief Checks if the given access mode is writable.
+         *  @param mode The access mode to test.
+         *  @return True if the access mode allows writing.
+         */
+        static constexpr bool IsWritable(AccessMode mode) noexcept
+        {
+            return (mode == AccessMode::Write) || (mode == AccessMode::ReadWrite);
+        }
     };
-
-    /** @brief Checks if the given access mode is readable.
-     *  @param mode The access mode to test.
-     *  @return True if the access mode allows reading.
-     */
-    constexpr inline bool IsReadable(AccessMode mode) noexcept
-    {
-        return (mode == AccessMode::Read) || (mode == AccessMode::ReadWrite);
-    }
-
-    /** @brief Checks if the given access mode is writable.
-     *  @param mode The access mode to test.
-     *  @return True if the access mode allows writing.
-     */
-    constexpr inline bool IsWritable(AccessMode mode) noexcept
-    {
-        return (mode == AccessMode::Write) || (mode == AccessMode::ReadWrite);
-    }
 
     /**
      * @brief Simple POD describing a memory region on a register.
@@ -48,8 +54,8 @@ namespace SRL::Types
      * @tparam Mode Compile-time AccessMode.
      * @tparam Args Variadic template arguments.
      */
-    template <uintptr_t Address, size_t Size, AccessMode Mode, typename... Args>
-    struct Register
+    template <uintptr_t Address, size_t Size, RegisterBase::AccessMode Mode, typename... Args>
+    struct Register : public RegisterBase
     {
         /** @brief Compile-time access mode.
          */
@@ -69,7 +75,7 @@ namespace SRL::Types
          */
         constexpr bool IsReadable() const noexcept
         {
-            return SRL::Types::IsReadable(Mode);
+            return RegisterBase::IsReadable(Mode);
         }
 
         /**
@@ -78,7 +84,7 @@ namespace SRL::Types
          */
         constexpr bool IsWritable() const noexcept
         {
-            return SRL::Types::IsWritable(Mode);
+            return RegisterBase::IsWritable(Mode);
         }
 
         /** @brief Construct a new Register with address and size.
