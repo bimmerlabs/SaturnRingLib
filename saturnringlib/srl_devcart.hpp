@@ -111,14 +111,10 @@ namespace SRL
              */
             constexpr static size_t FirmMaxlen = 1024 * 1024;
 
-            /** @brief Class representing the USB flags register bits
-             * This class provides a type-safe way to manipulate the bits in the USB flags
-             * register (Rxf, Txe, Pwren). It supports bitwise operations and flag checking.
-             * Note: Only bits 0,1,7 are defined; others are ignored/reserved.
+            /** @brief Struct containing the USB flags register bits and masks
              */
-            class USBFlags
+            struct USBFlags
             {
-            public:
                 /** @brief Bit positions for the USB flags register
                  */
                 enum : uint8_t
@@ -141,72 +137,6 @@ namespace SRL
 
                 /** @brief Inverted mask for all defined flags (for clearing/checking undefined bits) */
                 static constexpr uint8_t NotAllFlags = static_cast<uint8_t>(~AllFlags);
-
-            private:
-                uint8_t bits; // Raw bit storage (8-bit value read/written to hardware)
-
-            public:
-                /** @brief Default constructor: Initializes with no flags set */
-                USBFlags() :
-                    bits(0)
-                {}
-
-                /** @brief Constructor: Initialize with raw bit value */
-                explicit USBFlags(uint8_t bits) :
-                    bits(bits)
-                {}
-
-                /** @brief Constructor: Initialize by OR-ing a list of flag constants
-                 *  @param flags Initializer list of flag enums (e.g., {USBFlags::Rxf, USBFlags::Txe})
-                 */
-                USBFlags(std::initializer_list<uint8_t> flags) :
-                    bits(0)
-                {
-                    for (auto f : flags)
-                        bits |= f; // Set each provided flag
-                }
-
-                /** @brief Conversion to bool: True if any flag is set */
-                explicit operator bool() const { return bits != 0; }
-
-                /** @brief Bitwise OR: Combine with another UsbFlags */
-                USBFlags operator|(USBFlags other) const
-                {
-                    return USBFlags(bits | other.bits);
-                }
-
-                /** @brief Bitwise OR assignment: Add flags from another */
-                USBFlags &operator|=(USBFlags other)
-                {
-                    bits |= other.bits;
-                    return *this;
-                }
-
-                /** @brief Bitwise AND: Keep only common flags */
-                USBFlags operator&(USBFlags other) const
-                {
-                    return USBFlags(bits & other.bits);
-                }
-
-                /** @brief Bitwise AND assignment: Retain common flags */
-                USBFlags &operator&=(USBFlags other)
-                {
-                    bits &= other.bits;
-                    return *this;
-                }
-
-                /** @brief Bitwise NOT: Invert all bits (careful: affects undefined bits too)
-                 */
-                USBFlags operator~() const { return USBFlags(static_cast<uint8_t>(~bits)); }
-
-                /** @brief Check if a specific flag is set
-                 *  @param flag The flag constant to test (e.g., UsbFlags::Txe)
-                 *  @return True if set
-                 */
-                bool Has(uint8_t flag) const { return (bits & flag) != 0; }
-
-                /** @brief Get the raw bit value (for writing to hardware) */
-                uint8_t Bits() const { return bits; }
             };
 
             /** @brief Checks if the Transmit FIFO Empty (Txe) flag is set
@@ -226,20 +156,23 @@ namespace SRL
             static inline uint8_t ReadFlags() { return *(volatile uint8_t *)(USBFlagsAdr); }
 
             /** @brief Waits until the Transmit FIFO is ready, with timeout
-             * Polls `IsTxeFull()` until it returns false. If `maxPolls` reaches zero first,
-             * the function returns false to signal timeout.
-             * @param maxPolls Maximum number of polling iterations while FIFO is full
+             * Polls `IsTxeFull()` until it returns false. If `maxPolls` is non-zero and
+             * reached first, the function returns false to signal timeout.
+             * @param maxPolls Maximum number of polling iterations while FIFO is full (0 for infinite wait)
              * @return true if FIFO became ready before timeout, false otherwise
              */
             static inline bool WaitTxe(uint32_t maxPolls = 0)
             {
                 while (IsTxeFull())
                 {
-                    if (maxPolls == 0)
+                    if (maxPolls > 0)
                     {
-                        return false;
+                        --maxPolls;
+                        if (maxPolls == 0)
+                        {
+                            return false;
+                        }
                     }
-                    --maxPolls;
                 }
                 return true;
             }
@@ -255,20 +188,23 @@ namespace SRL
             }
 
             /** @brief Waits until data is available in the receive FIFO, with timeout
-             * Polls `IsRxfEmpty()` until it returns false. If `maxPolls` reaches zero
-             * first, the function returns false to signal timeout.
-             * @param maxPolls Maximum number of polling iterations while FIFO is empty
+             * Polls `IsRxfEmpty()` until it returns false. If `maxPolls` is non-zero and
+             * reached first, the function returns false to signal timeout.
+             * @param maxPolls Maximum number of polling iterations while FIFO is empty (0 for infinite wait)
              * @return true if data became available before timeout, false otherwise
              */
             static inline bool WaitRxf(uint32_t maxPolls = 0)
             {
                 while (IsRxfEmpty())
                 {
-                    if (maxPolls == 0)
+                    if (maxPolls > 0)
                     {
-                        return false;
+                        --maxPolls;
+                        if (maxPolls == 0)
+                        {
+                            return false;
+                        }
                     }
-                    --maxPolls;
                 }
                 return true;
             }
