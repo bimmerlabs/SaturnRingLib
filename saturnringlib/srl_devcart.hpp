@@ -463,13 +463,6 @@ namespace SRL
             {
                 return ReadRegister(Register::CartCpldVer) == 0x19;
             }
-
-            /**
-             * @note `REG_STDOUT_BIT` and `REG_SD_IO_0` share the same address.
-             * This suggests they might be bit aliases or their function is mode-dependent.
-             * Care should be taken to avoid conflicts when using them.
-             */
-
         } // namespace CS1
     } // namespace DevCart
 } // namespace SRL
