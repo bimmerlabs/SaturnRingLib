@@ -3,7 +3,7 @@
 #include "srl_base.hpp"      // Base definitions (e.g., uint8_t if not using std)
 #include "srl_string.hpp"    // For snprintf (custom implementation)
 #include "srl_debug.hpp"     // For SRL_DEBUG_MAX_LOG_LENGTH (buffer size constant)
-#include "srl_devcart.hpp"   // For USB DevCart communication (CS0::write)
+#include "srl_devcart.hpp"   // For USB DevCart communication (CS0::Write)
 
 #include <cstdint>          // For uint8_t (ensure consistency with srl_base)
 #include <type_traits>      // For std::conditional_t
@@ -54,7 +54,7 @@ namespace SRL
          */
         enum class LogOutputs : uint8_t
         {
-            /** @brief DEV_CART: Output via USB DevCart FIFO (SRL::DevCart::CS0::write). */
+            /** @brief DEV_CART: Output via USB DevCart FIFO (SRL::DevCart::CS0::Write). */
             DEV_CART = 0,
 
             /** @brief EMULATOR: Output via memory-mapped I/O for emulator console. */
@@ -143,7 +143,7 @@ namespace SRL
 
         /** @brief DevCartLogger class.
          *
-         * @details Logs to USB DevCart via SRL::DevCart::CS0::write (byte-by-byte USB FIFO).
+         * @details Logs to USB DevCart via SRL::DevCart::CS0::Write (byte-by-byte USB FIFO).
          *          No internal buffering; relies on DevCart FIFO.
          */
         class DevCartLogger
@@ -173,11 +173,11 @@ namespace SRL
 
             /** @brief Write single byte to DevCart USB FIFO.
              *  @param c Pointer to byte (writes only first).
-             *  Note: Casts to uint8_t* for DevCart::write; may block if FIFO full.
+             *  Note: Casts to uint8_t* for DevCart::Write; may block if FIFO full.
              */
             static void putc(const char *c)
             {
-                SRL::DevCart::CS0::write(reinterpret_cast<const uint8_t *>(c));
+                SRL::DevCart::CS0::Write(reinterpret_cast<const uint8_t *>(c));
             }
 
             /** @brief Flush any pending data (no-op here; USB FIFO auto-flushes?).
