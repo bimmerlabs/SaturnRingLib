@@ -69,7 +69,7 @@ namespace SRL::Types
          */
         constexpr bool isReadable() const noexcept
         {
-            return (Mode == AccessMode::Read) || (Mode == AccessMode::ReadWrite);
+            return SRL::Types::isReadable(Mode);
         }
 
         /**
@@ -78,7 +78,7 @@ namespace SRL::Types
          */
         constexpr bool isWritable() const noexcept
         {
-            return (Mode == AccessMode::Write) || (Mode == AccessMode::ReadWrite);
+            return SRL::Types::isWritable(Mode);
         }
 
         /** @brief Construct a new Register with address and size.
