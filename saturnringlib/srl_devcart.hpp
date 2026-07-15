@@ -225,24 +225,13 @@ namespace SRL
              */
             static inline uint8_t ReadFlags() { return *(volatile uint8_t *)(USBFlagsAdr); }
 
-            /** @brief Waits until the Transmit FIFO is ready (Txe cleared?)
-             * This function polls `IsTxeFull()` until it returns false, which indicates
-             * that the transmit FIFO is no longer full and can accept data.
-             * @warning Infinite loop if hardware never clears—consider adding timeout in production code.
-             */
-            static inline void WaitTxe()
-            {
-                // Bad design, no timeout! TODO: Add optional timeout parameter or counter
-                while (IsTxeFull()); // Busy-wait
-            }
-
             /** @brief Waits until the Transmit FIFO is ready, with timeout
              * Polls `IsTxeFull()` until it returns false. If `maxPolls` reaches zero first,
              * the function returns false to signal timeout.
              * @param maxPolls Maximum number of polling iterations while FIFO is full
              * @return true if FIFO became ready before timeout, false otherwise
              */
-            static inline bool WaitTxe(uint32_t maxPolls)
+            static inline bool WaitTxe(uint32_t maxPolls = 0)
             {
                 while (IsTxeFull())
                 {
@@ -265,24 +254,13 @@ namespace SRL
                 return ((*(volatile uint8_t *)(USBFlagsAdr)) & USBFlags::Rxf) != 0;
             }
 
-            /** @brief Waits until data is available in the receive FIFO
-             * This function polls `IsRxfEmpty()` until it returns false, indicating data is
-             * available.
-             * @warning Infinite loop if hardware never receives—consider adding timeout in production code.
-             */
-            static inline void WaitRxf()
-            {
-                // Bad design, no timeout !
-                while (IsRxfEmpty()); // Busy-wait
-            }
-
             /** @brief Waits until data is available in the receive FIFO, with timeout
              * Polls `IsRxfEmpty()` until it returns false. If `maxPolls` reaches zero
              * first, the function returns false to signal timeout.
              * @param maxPolls Maximum number of polling iterations while FIFO is empty
              * @return true if data became available before timeout, false otherwise
              */
-            static inline bool WaitRxf(uint32_t maxPolls)
+            static inline bool WaitRxf(uint32_t maxPolls = 0)
             {
                 while (IsRxfEmpty())
                 {
