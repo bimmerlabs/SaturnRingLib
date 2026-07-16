@@ -262,8 +262,8 @@ exit
 
 :(){
   @echo off
-  rem Windows implementation placeholder
-  echo "Some MS Windows magics required here"
+  ..\tools\bin\win\ftx\ftx -x .\cd\data\0.bin 0x06004000 
+  ..\tools\bin\win\ftx\ftx -c
   )
   GOTO end
 
