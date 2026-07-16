@@ -1,0 +1,108 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "SRL: Build Unit Tests (Emulator)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "clean",
+        "all",
+        "SRL_LOG_OUTPUT=EMULATOR"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/Tests"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "SRL: Build Unit Tests (Devcart)",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "clean",
+        "all",
+        "SRL_LOG_OUTPUT=DEV_CART"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}/Tests"
+      },
+      "group": "build",
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "SRL: Run Tests (mednafen)",
+      "type": "shell",
+      "command": "./Tests/run_tests.bat",
+      "windows": {
+        "command": "Tests\\run_tests.bat"
+      },
+      "args": [
+        "mednafen"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "SRL: Run Tests (USBGamers)",
+      "type": "shell",
+      "command": "./Tests/run_tests.bat",
+      "windows": {
+        "command": "Tests\\run_tests.bat"
+      },
+      "args": [
+        "USBGamers"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "SRL: Run Tests (kronos)",
+      "type": "shell",
+      "command": "./Tests/run_tests.bat",
+      "windows": {
+        "command": "Tests\\run_tests.bat"
+      },
+      "args": [
+        "kronos"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "SRL: Convert UTS reports (uts.log -> json/xml)",
+      "type": "shell",
+      "command": "bash",
+      "windows": {
+        "command": "bash"
+      },
+      "args": [
+        "Tests/test_campaign.sh",
+        "--skip-build",
+        "--skip-run"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

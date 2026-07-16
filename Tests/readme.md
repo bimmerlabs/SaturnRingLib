@@ -84,7 +84,7 @@ To install the WinUSB driver:
 
 ### Run
 
-1. Build tests with `make all`.
+1. Build tests with `make all SRL_LOG_OUTPUT=DEV_CART`.
 2. Run `./run_tests.bat USBGamers`.
 
 The script resets the USB device, uploads `cd/data/0.bin` to address `0x06004000`, and then starts the capture flow.
