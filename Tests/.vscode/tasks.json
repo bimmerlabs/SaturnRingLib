@@ -6,7 +6,7 @@
             "type": "shell",
             "command": "./compile.bat clean && ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR",
             "windows": {
-                "command": "compile.bat clean; compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR"
+                "command": "./compile.bat clean; ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR"
             },
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -22,7 +22,7 @@
             "type": "shell",
             "command": "./compile.bat clean && ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART",
             "windows": {
-                "command": "compile.bat clean; compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART"
+                "command": "./compile.bat clean; ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART"
             },
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -35,7 +35,7 @@
             "type": "shell",
             "command": "./run_tests.bat",
             "windows": {
-                "command": "run_tests.bat"
+                "command": "./run_tests.bat"
             },
             "args": [
                 "mednafen"
@@ -51,7 +51,7 @@
             "type": "shell",
             "command": "./run_tests.bat",
             "windows": {
-                "command": "run_tests.bat"
+                "command": "./run_tests.bat"
             },
             "args": [
                 "USBGamers"
@@ -67,7 +67,7 @@
             "type": "shell",
             "command": "./run_tests.bat",
             "windows": {
-                "command": "run_tests.bat"
+                "command": "./run_tests.bat"
             },
             "args": [
                 "kronos"
