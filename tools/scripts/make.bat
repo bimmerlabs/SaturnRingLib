@@ -1,8 +1,12 @@
 @echo off
 
+:: Save the original PATH at script startup
+SET "OLD_PATH=%PATH%"
+
 :: 1. Save the target, default to debug if empty
 SET "TARGET=%~1"
 IF "%TARGET%"=="" SET "TARGET=debug"
+
 
 :: 2. Check for custom compiler directory
 SET "COMPILER_DIR=../../Compiler"
@@ -36,16 +40,16 @@ SET "UTIL_DIR=%COMPILER_DIR%\Other Utilities"
 SET "MSYS_DIR=%COMPILER_DIR%\msys2\usr\bin"
 SET "BIN_DIR=%COMPILER_DIR%\sh2eb-elf\bin"
 
-:: Safely append each directory only if it doesn't already exist in PATH
-echo "%PATH%" | findstr /I /C:";%UTIL_DIR%;" /C:";%UTIL_DIR%\" >nul || SET "PATH=%UTIL_DIR%;%PATH%"
-echo "%PATH%" | findstr /I /C:";%MSYS_DIR%;" /C:";%MSYS_DIR%\" >nul || SET "PATH=%MSYS_DIR%;%PATH%"
-echo "%PATH%" | findstr /I /C:";%BIN_DIR%;" /C:";%BIN_DIR%\"   >nul || SET "PATH=%BIN_DIR%;%PATH%"
+:: Temporarily modify PATH
+SET "PATH=%UTIL_DIR%;%MSYS_DIR%;%BIN_DIR%;%PATH%"
 
 :: 4. Execute Build Targets
 IF "%TARGET%" == "debug" GOTO debug
 IF "%TARGET%" == "release" GOTO release
 IF "%TARGET%" == "clean" GOTO clean
 echo Unknown target: %TARGET%
+:: Restore original PATH on exit
+SET "PATH=%OLD_PATH%"
 exit /b 1
 
 :debug
@@ -64,3 +68,5 @@ make clean %MAKE_ARGS%
 GOTO end
 
 :end
+:: Restore original PATH on exit
+SET "PATH=%OLD_PATH%"

@@ -17,20 +17,17 @@ fi
 
 # 2. Environment Setup
 
-# Helper function to safely add to PATH if not already present
-add_to_path() {
-  if [[ ":$PATH:" != *":$1:"* ]]; then
-    export PATH="$1:$PATH"
-  fi
-}
+# Save the original PATH at script startup
+OLD_PATH="$PATH"
 
 host_platform="$(uname -s)"
 if [ "$host_platform" = "Darwin" ]; then
-  add_to_path "${COMPILER_DIR}/mac/sh2eb-elf/bin"
+  export PATH="${COMPILER_DIR}/mac/sh2eb-elf/bin:$PATH"
 elif [ "$host_platform" = "Linux" ]; then
-  add_to_path "${COMPILER_DIR}/linux/sh2eb-elf/bin"
+  export PATH="${COMPILER_DIR}/linux/sh2eb-elf/bin:$PATH"
 else
   echo "Unsupported host platform: $host_platform"
+  export PATH="$OLD_PATH"
   exit 1
 fi
 
@@ -38,23 +35,29 @@ fi
 TARGET="${1:-debug}"
 
 # 4. Execute Build Targets with the extra arguments
+RC=0
 case "$TARGET" in
   debug)
     printf "\033[30m\033[43mBuilding debug...\033[0m\r\n"
-    make all DEBUG=1 "${MAKE_ARGS[@]}" || exit 1
+    make all DEBUG=1 "${MAKE_ARGS[@]}"
+    RC=$?
     ;;
   release)
     printf "\033[30m\033[42mBuilding release...\033[0m\r\n"
-    make all "${MAKE_ARGS[@]}" || exit 1
+    make all "${MAKE_ARGS[@]}"
+    RC=$?
     ;;
   clean)
     printf "\033[30m\033[105mCleaning...\033[0m\r\n"
-    make clean "${MAKE_ARGS[@]}" || exit 1
+    make clean "${MAKE_ARGS[@]}"
+    RC=$?
     ;;
   *)
     echo "Unknown target: $TARGET"
-    exit 1
+    RC=1
     ;;
 esac
 
-exit
+# Restore original PATH on exit
+export PATH="$OLD_PATH"
+exit $RC
