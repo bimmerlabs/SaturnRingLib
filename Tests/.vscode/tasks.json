@@ -1,63 +1,82 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Run with Mednafen",
+            "label": "SRL: Build Unit Tests (Emulator)",
             "type": "shell",
-            "command": "./run_with_mednafen.bat",
-            "problemMatcher": [],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": true
+            "command": "./compile.bat clean && ./compile.bat debug \"\" SRL_LOG_OUTPUT=EMULATOR",
+            "windows": {
+                "command": "compile.bat clean && compile.bat debug \"\" SRL_LOG_OUTPUT=EMULATOR"
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
-            }
+            },
+            "problemMatcher": []
         },
         {
-            "label": "Compile [DEBUG]",
+            "label": "SRL: Build Unit Tests (Devcart)",
             "type": "shell",
-            "command": "./compile.bat debug",
-            "problemMatcher": [],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": true
+            "command": "./compile.bat clean && ./compile.bat debug \"\" SRL_LOG_OUTPUT=DEV_CART",
+            "windows": {
+                "command": "compile.bat clean && compile.bat debug \"\" SRL_LOG_OUTPUT=DEV_CART"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": []
         },
         {
-            "label": "Compile [RELEASE]",
+            "label": "SRL: Run Tests (mednafen)",
             "type": "shell",
-            "command": "./compile.bat release",
-            "problemMatcher": [],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": true
+            "command": "./run_tests.bat",
+            "windows": {
+                "command": "run_tests.bat"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "args": [
+                "mednafen"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "problemMatcher": []
         },
         {
-            "label": "Clean",
+            "label": "SRL: Run Tests (USBGamers)",
             "type": "shell",
-            "command": "./clean.bat",
-            "problemMatcher": [],
-            "presentation": {
-                "showReuseMessage": false,
-                "clear": true
+            "command": "./run_tests.bat",
+            "windows": {
+                "command": "run_tests.bat"
             },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
+            "args": [
+                "USBGamers"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "problemMatcher": []
         },
+        {
+            "label": "SRL: Run Tests (kronos)",
+            "type": "shell",
+            "command": "./run_tests.bat",
+            "windows": {
+                "command": "run_tests.bat"
+            },
+            "args": [
+                "kronos"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "problemMatcher": []
+        }
     ]
 }
