@@ -4,9 +4,9 @@
         {
             "label": "SRL: Build Unit Tests (Emulator)",
             "type": "shell",
-            "command": "./compile.bat clean && ./compile.bat debug \"\" SRL_LOG_OUTPUT=EMULATOR",
+            "command": "./compile.bat clean && ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR",
             "windows": {
-                "command": "compile.bat clean && compile.bat debug \"\" SRL_LOG_OUTPUT=EMULATOR"
+                "command": "compile.bat clean; compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR"
             },
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -20,9 +20,9 @@
         {
             "label": "SRL: Build Unit Tests (Devcart)",
             "type": "shell",
-            "command": "./compile.bat clean && ./compile.bat debug \"\" SRL_LOG_OUTPUT=DEV_CART",
+            "command": "./compile.bat clean && ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART",
             "windows": {
-                "command": "compile.bat clean && compile.bat debug \"\" SRL_LOG_OUTPUT=DEV_CART"
+                "command": "compile.bat clean; compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART"
             },
             "options": {
                 "cwd": "${workspaceFolder}"
