@@ -4,9 +4,15 @@
         {
             "label": "SRL: Build Unit Tests (Emulator)",
             "type": "shell",
-            "command": "./compile.bat clean && ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR",
+            "command": "./compile.bat clean \"../Compiler\" && ./compile.bat debug \"../Compiler\" \"SRL_LOG_OUTPUT=EMULATOR\"",
             "windows": {
-                "command": "./compile.bat clean; ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=EMULATOR"
+                "command": ".\\compile.bat clean \"..\\Compiler\" && .\\compile.bat debug \"..\\Compiler\" \"SRL_LOG_OUTPUT=EMULATOR\"",
+                "options": {
+                    "shell": {
+                        "executable": "cmd.exe",
+                        "args": ["/d", "/c"]
+                    }
+                }
             },
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -20,9 +26,15 @@
         {
             "label": "SRL: Build Unit Tests (Devcart)",
             "type": "shell",
-            "command": "./compile.bat clean && ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART",
+            "command": "./compile.bat clean \"../Compiler\" && ./compile.bat debug \"../Compiler\" \"SRL_LOG_OUTPUT=DEV_CART\"",
             "windows": {
-                "command": "./compile.bat clean; ./compile.bat debug ../Compiler SRL_LOG_OUTPUT=DEV_CART"
+                "command": ".\\compile.bat clean \"..\\Compiler\" && .\\compile.bat debug \"..\\Compiler\" \"SRL_LOG_OUTPUT=DEV_CART\"",
+                "options": {
+                    "shell": {
+                        "executable": "cmd.exe",
+                        "args": ["/d", "/c"]
+                    }
+                }
             },
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -33,13 +45,10 @@
         {
             "label": "SRL: Run Tests (mednafen)",
             "type": "shell",
-            "command": "./run_tests.bat",
+            "command": "./run_tests.bat mednafen",
             "windows": {
-                "command": "./run_tests.bat"
+                "command": ".\\run_tests.bat mednafen"
             },
-            "args": [
-                "mednafen"
-            ],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -49,13 +58,10 @@
         {
             "label": "SRL: Run Tests (USBGamers)",
             "type": "shell",
-            "command": "./run_tests.bat",
+            "command": "./run_tests.bat USBGamers",
             "windows": {
-                "command": "./run_tests.bat"
+                "command": ".\\run_tests.bat USBGamers"
             },
-            "args": [
-                "USBGamers"
-            ],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -65,13 +71,10 @@
         {
             "label": "SRL: Run Tests (kronos)",
             "type": "shell",
-            "command": "./run_tests.bat",
+            "command": "./run_tests.bat kronos",
             "windows": {
-                "command": "./run_tests.bat"
+                "command": ".\\run_tests.bat kronos"
             },
-            "args": [
-                "kronos"
-            ],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
