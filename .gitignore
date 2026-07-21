@@ -53,6 +53,8 @@
 /[Tt]ests/**/*.o
 /[Tt]ests/**/imgui.ini
 /[Tt]ests/**/*.log
+/[Tt]ests/uts.json
+/[Tt]ests/uts.xml
 
 /Projects/**
 !/Projects/Put_your_projects_here.txt
@@ -61,3 +63,8 @@
 # Compiler folder
 /[Cc]ompiler/**
 Compiler/
+
+# Python bytecode
+**/__pycache__/
+**/*.pyc
+

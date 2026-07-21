@@ -1,40 +1,63 @@
 # Linux code here
-if [[ $# -eq 2 ]]; then
-  printf "\033[91mUsing custom compiler path\033[0m\r\n"
-  export COMPILER_DIR=$2;
+
+# 1. Determine if a custom compiler path was provided ($2)
+# If provided (even if empty ""), make arguments start from $3. If not, they start from $2.
+if [[ $# -ge 2 ]]; then
+  if [[ -n "$2" ]]; then
+    printf "\033[91mUsing custom compiler path\033[0m\r\n"
+    export COMPILER_DIR="$2"
+  else
+    export COMPILER_DIR=../../Compiler
+  fi
+  MAKE_ARGS=("${@:3}") # Captures 3rd, 4th, 5th... arguments
 else
-  export COMPILER_DIR=../../Compiler;
+  export COMPILER_DIR=../../Compiler
+  MAKE_ARGS=()
 fi
+
+# 2. Environment Setup
+
+# Save the original PATH at script startup
+OLD_PATH="$PATH"
 
 host_platform="$(uname -s)"
 if [ "$host_platform" = "Darwin" ]; then
-  export PATH=${COMPILER_DIR}/mac/sh2eb-elf/bin:${PATH};
+  export PATH="${COMPILER_DIR}/mac/sh2eb-elf/bin:$PATH"
 elif [ "$host_platform" = "Linux" ]; then
-  export PATH=${COMPILER_DIR}/linux/sh2eb-elf/bin:${PATH};
+  export PATH="${COMPILER_DIR}/linux/sh2eb-elf/bin:$PATH"
 else
   echo "Unsupported host platform: $host_platform"
+  export PATH="$OLD_PATH"
   exit 1
 fi
 
-if [[ $# -eq 0 ]]; then
-  printf "\033[91mNo target specified! Defaulting to debug...\033[0m\r\n"
-  printf "\033[30m\033[43mBuilding debug...\033[0m\r\n"
-  make all DEBUG=1 || exit
-fi
+# 3. Handle default fallback safely
+TARGET="${1:-debug}"
 
-if [[ "$1" = "debug" ]]; then
-  printf "\033[30m\033[43mBuilding debug...\033[0m\r\n"
-  make all DEBUG=1 || exit
-fi
+# 4. Execute Build Targets with the extra arguments
+RC=0
+case "$TARGET" in
+  debug)
+    printf "\033[30m\033[43mBuilding debug...\033[0m\r\n"
+    make all DEBUG=1 "${MAKE_ARGS[@]}"
+    RC=$?
+    ;;
+  release)
+    printf "\033[30m\033[42mBuilding release...\033[0m\r\n"
+    make all "${MAKE_ARGS[@]}"
+    RC=$?
+    ;;
+  clean)
+    printf "\033[30m\033[105mCleaning...\033[0m\r\n"
+    make clean "${MAKE_ARGS[@]}"
+    RC=$?
+    ;;
+  *)
+    echo "Unknown target: $TARGET"
+    RC=1
+    ;;
+esac
 
-if [[ "$1" = "release" ]]; then
-  printf "\033[30m\033[42mBuilding release...\033[0m\r\n"
-  make all || exit
-fi
-
-if [[ "$1" = "clean" ]]; then
-  printf "\033[30m\033[105mCleaning...\033[0m\r\n"
-  make clean || exit
-fi
-
-exit
+# Restore original PATH on exit
+export PATH="$OLD_PATH"
+exit $RC
