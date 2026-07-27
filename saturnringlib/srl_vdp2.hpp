@@ -8,6 +8,7 @@
 #include "srl_cd.hpp"
 #include "srl_tilemap_interfaces.hpp"
 
+//Test Changes
 namespace SRL
 {
     /** @brief VDP2 control
@@ -311,13 +312,15 @@ namespace SRL
                 }
                 else if(sz>131072)//case: bmp requires 2 out of the 4 VRAM banks
                 { 
-                    if((uint32_t)bankBot[0]==VDP2_VRAM_A0 && (uint32_t)bankBot[1]==VDP2_VRAM_A1)
+                    if((uint32_t)currentBot[0]==VDP2_VRAM_A0 && (uint32_t)currentBot[1]==VDP2_VRAM_A1)
                     {
+                        
                         alloc = VRAM::Allocate(131072, 32, VramBank::A0, numCycles);
                         VRAM::Allocate(131072, 32, VramBank::A1, numCycles);
                     }
-                    else if((uint32_t)bankBot[1]==VDP2_VRAM_A1 && (uint32_t)bankBot[2]==VDP2_VRAM_B0)
+                    else if((uint32_t)currentBot[1]==VDP2_VRAM_A1 && (uint32_t)currentBot[2]==VDP2_VRAM_B0)
                     {
+                      
                         alloc = VRAM::Allocate(131072, 32, VramBank::A1, numCycles);
                         VRAM::Allocate(131072, 32, VramBank::B0, numCycles);
                     }
@@ -337,7 +340,7 @@ namespace SRL
                     if (alloc == nullptr) SRL::Debug::Assert("Bmp Allocation failed: insufficient VRAM Available");
                 }
                 if(size) *size = sz;
-               // SRL::Debug::Print(3,17,"Size = %d",size);
+               
                // SRL::Debug::Print(3,18,"Address: %x",(uint32_t)alloc-VDP2_VRAM_A0);
                 return alloc;
             }
@@ -717,7 +720,7 @@ namespace SRL
              *  @details This Function takes the opacity specified as a fixed point value and converts it to
              *  one of the 32 color calculation ratios that a scroll screen can use (value is floored to the nearest ratio).
              *  Color Calculation is turned on if Opacity < 1.0, or off if Opacity>= 1.0. Color calculation is unchanged if value is negative.
-             *  @note Color ratios only apply to highest priority pixels in frame
+             *  @note Color ratios only apply to highest priority pixels in the frame
              *  @note When VDP2 ColorCalcMode is set to UseColorAddition, all scrolls with opacity < 1.0 will use color addition
              *  in place of their specified ratios.
              *  @param opacity Fxp decimal value between 0.0 and 1.0 representing pixel opacity for the scroll screen (Default 1.0)
@@ -920,7 +923,7 @@ namespace SRL
                     SRL::Debug::Assert("Bitmap Allocation Failed");
                     return;
                 }
-                VRAM::Blank(ScreenType::CellAddress,ScreenType::CellAllocSize);
+                //VRAM::Blank(ScreenType::CellAddress,ScreenType::CellAllocSize);
                 Bmp2VRAM(bmp->GetData(),ScreenType::CellAddress,myInfo);
                 
                 int colorID = -1;
@@ -1218,8 +1221,8 @@ namespace SRL
             static void SetPosition(Math::Vector2D& pos) { slScrPosNbg3(pos.X.RawValue(), pos.Y.RawValue()); }
         };
 
-        /** @brief setting for RBG0,1 rotation constraints
-         * @note More simulated axis require more VRAM resources.
+        /** @brief Settings for RBG0 rotation constraints
+         * @note More simulated axis of rotation require more VDP2 VRAM resources to display.
          */
         enum class RotationMode
         {
@@ -1229,12 +1232,12 @@ namespace SRL
             OneAxis,
 
             /** @brief 3d rotation with pitch and yaw, but no roll (scale modified per line)
-             * @note Requires 0x2000-0x18000 bytes in arbitrary VRAM Bank (No cycles)
+             * @note Requires 0x2000-0x18000 bytes in arbitrary VRAM Bank (No cycle slots required)
              */
             TwoAxis,
 
             /** @brief Full 3d rotation with pitch, yaw and roll (scale modified per pixel)
-             * @note Requires 0x2000-0x18000 bytes in Reserved VRAM bank (8 cycles)
+             * @note Requires 0x2000-0x18000 bytes in Reserved VRAM bank (all 8 cycle slots required)
              */
             ThreeAxis,
         };
@@ -1249,17 +1252,17 @@ namespace SRL
         enum class OverPattern
         {
            
-             /** @brief Screen areas outside the tilemap repeat the full tilemap pattern
+             /** @brief Screen areas outside the map repeat the full tilemap pattern
              */
             RepeatMap,
 
-            /** @brief Screen areas outside the tilemap repeat a single selectable tile from the 
+            /** @brief Screen areas outside the map repeat a single selectable tile from the 
             *   tileset
             *   @note Not available in Bitmap Mode
             */
             RepeatTile,
 
-            /** @brief Screen areas outside the tilemap are treated as transparent pixels
+            /** @brief Screen areas outside the map are treated as transparent pixels
             */
             Transparent,
 
@@ -1286,7 +1289,7 @@ namespace SRL
              *  @details In regions of the screen beyond parameter A's simulated 'horizon'*,
              *  Rotation parameter B will be displayed 
              *  @note -*(More technically, any screen coordinate where the scaling coefficient data
-             *  read for Parameter A has its highest bit set to 1 will display Parameter B data instead). 
+             *  read for Parameter A has its high bit set to 1 will display Parameter B data instead). 
              *  @note - Only Parameter A can display 3 Axis (Per Dot) Rotation in this mode.
             */
             PerspectiveSwitch,
@@ -1310,11 +1313,11 @@ namespace SRL
         /** @brief RBG0 interface
          * @details Rotating Background Scroll 0:
          *      -Available color depths: Paletted16, Paletted256, RBG555
-         *      -Available modes: Tilemap, Bitmap
+         *      -Available image modes: Tilemap, Bitmap
          *      -Available features: Scrolling, Scaling, Rotation, 
-         *      -Coefficient table allows per line and per pixel scaling
-         *       to simulate perspective
-         *      -simulate up to 2 planes with secondary rotation parameters
+         *      -Reading a coefficient table from VRAM allows per-line/per-pixel scaling
+         *       to simulate a 3D plane.
+         *      -simulate up to 2 planes using separate rotation parameters and tilemaps
          */
         class RBG0 : public BmpScreen<RBG0, scnRBG0, RBG0ON>
         {
@@ -1471,7 +1474,8 @@ namespace SRL
                 slOverRA(0);
                 uint16_t sglFlag = info.Height<=256? 0x2 : 0x6;
                 sglFlag |= info.Width<= 512 ?  0 : 1<<3; 
-                slPageRbg0(RBG0::CellAddress, (void*)RBG0::TilePalette.GetData(), RBG0::Info.MapMode);//this is required to reserve the VRAM banks
+                //VDP2_RAMCTL &= 0xff00;
+                slPageRbg0(RBG0::CellAddress, (void*)RBG0::TilePalette.GetData(), RBG0::Info.MapMode);//this is required to reserve the VRAM bank
                 slBitMapRbg0(GetSGLColorMode(info.ColorMode), sglFlag, RBG0::CellAddress);  
                 if(info.ColorMode==SRL::CRAM::TextureColorMode::Paletted16)
                 {
@@ -1562,13 +1566,13 @@ namespace SRL
             
             /** @brief Select what type of rotation to use for the rotating scroll (Call before Loading RBG0)
              * @param mode The RotationMode to use for RBG0
-             * @param vblank (Optional) Chose to update VRAM at VBLANK to reduce amount of coefficient
-             * data required for rotation of a plane (default = true)
+             * @param vblank (Optional) update VRAM at VBLANK to reduce amount of coefficient
+             * data required for rotation (default = true)
              * @note when 2 or 3 axis rotation is selected, VRAM will be allocated to store
              * necessary scaling coefficients. If Vblank is set false, all coefficients will be
-             * statically stored in VRAM as a 0x18000 byte table. If Vblank is set true, the
-             * the coefficients for the perspective of the current frame will be 
-             * written to VRAM at each Vblank, reducing VRAM footprint to 0x2000 bytes per
+             * statically stored in VRAM as a 0x18000 byte table. If Vblank is set true, select
+             * coefficients for the perspective of the current frame will be dynamically 
+             * sent to VRAM during Vblank, reducing VRAM footprint to 0x2000 bytes per
              * rotation parameter but increasing required Vblank overhead. If the transfer can 
              * not complete within Vblank window, screen tearing may be visible in the plane.
              */
@@ -1580,12 +1584,12 @@ namespace SRL
                 {
                     if(vblank==true)
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B0, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B1, 0);
                         VDP2::RBG0::KtableAddressB =(void*)((uint32_t)VDP2::RBG0::KtableAddress+0x2000);                         
                     }
                     else
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B0, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B1, 0);
                         VDP2::RBG0::KtableAddressB =  VDP2::RBG0::KtableAddress;
                         slMakeKtable(VDP2::RBG0::KtableAddress);
                         kflag = K_FIX;
@@ -1634,12 +1638,12 @@ namespace SRL
                 {
                     if(vblank==true)
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B0, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B1, 0);
                         VDP2::RBG0::KtableAddressB = (void*)((uint32_t)VDP2::RBG0::KtableAddress+0x2000);                        
                     }
                     else
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B0, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B1, 0);
                         VDP2::RBG0::KtableAddressB =  VDP2::RBG0::KtableAddress;
                         slMakeKtable(VDP2::RBG0::KtableAddress);
                         kflag = K_FIX;
@@ -1680,7 +1684,7 @@ namespace SRL
 
             /** @brief Writes the current matrix transform to RBG0 rotation parameters
              * to update its perspective
-             * @param param selects which rotation parameter to write the matrix to(defaults to Primary)
+             * @param param selects which rotation parameter to write the matrix to (defaults to Primary)
              */
             inline static void SetCurrentTransform(VDP2::RotationParameter param = VDP2::RotationParameter::Primary)
             {
@@ -1696,21 +1700,24 @@ namespace SRL
 
             /** @brief Sets the plane of Tilemap Data to be displayed
              * @param a,b,c,d Page Table addresses of the planes to display
-             * @note Multi Plane maps must be set with the 16 plane version of this function
+             * @note Multi Plane maps must be set with the 16 plane overload of this function
              */
             static void SetPlanes(void* a, void* b, void* c, void* d) { 
                 
                 sl1MapRA(a);
+                sl1MapRB(b);
             }
             
-            /** @brief Sets the plane of Tilemap Data to be displayed with 16 planes
-             * @details Unlike NBG scrolls RBG0 only loads with the default tiling of 1 plane. Use this
+            /** @brief Sets the planes of Tilemap Data to be displayed with 16 planes
+             * @details Unlike NBG scrolls RBG0 only loads with the default of 1 plane. Use this
              * function after loading to set the arrangement of multi plane tilemaps within a 4x4 grid:
              *      |a,b,c,d|
              *      |e,f,g,h|
              *      |i,j,k,l|
              *      |m,n,o,p|
-             * @param layout 4x4 array of uint8_t indices representing the index of each plane in the map layout
+             * @param layout 4x4 array of uint8_t indices representing the index of each plane in the map data
+             * (index 0 = base address of the map data, increment by 1 per plane unit of map data stored)
+             * @param param The Rotation parameter whose map is being set: primary or secondary (defaults to primary)
              * @note No check is performed to ensure the indecies entered are within the bounds of
              * the scroll's map data. Specifying indices larger than the number of planes loaded 
              * will result in the diplay of garbage data in those portions of the map  
@@ -1797,7 +1804,7 @@ namespace SRL
              * and Color addition is applied to all sprites whose priority meets the color condition (see SpriteLayer::SetColorCondition() for details)
              * @note -RGB sprites always use the opacity set in CC register[bank0]
              * @note -Does NOT turn color calc ON or OFF for the Sprite Layer(use SpriteLayer::ColorCalcON,OFF())
-             * @note -available cc registers vary by Palette code config- default allows all 8 banks
+             * @note -available cc registers vary by Palette code config- default allows selecting all 8 banks
              * @param opacity Fxp decimal value between 0.0 and 1.0 representing pixel opacity of the cc register
              * @param bank (optional) which of the 8 CC registers to Set the opacity in (defaults to 0)
              */
@@ -1819,9 +1826,9 @@ namespace SRL
              * @note -RGB sprites always use the priority from bank0
              * @note -During VDP2 init, priority bank0 and bank1 are initialized to Layer3 and Layer4 respectively
              * @note -Changing these priorities will result in differing behavior for sprite color calculation
-             * (See SpriteLayer::SetColorCondition() for more details)
+             * (See documentation of SpriteLayer::SetColorCondition() for more details)
              * @param pr enum VDP2::Priority Layer
-             * @param bank (optional) enum VDP2::SpriteBank designating which priority bank to write to
+             * @param bank (optional) enum VDP2::SpriteBank designating which priority bank to write to (default = Bank0)
              */
             inline static void SetPriority(SRL::VDP2::Priority pr, VDP2::SpriteBank bank = VDP2::SpriteBank::Bank0)
             {
@@ -1829,12 +1836,12 @@ namespace SRL
             }
 
             /** @brief Set conditions under which VDP2 color calculation is performed on sprites based on their priority.
-             * @details Sets up the condition that allows only select sprites to receive Half Transparent
+             * @details Sets up a condition that allows only select sprites to receive Half Transparent
              *  color calculation with VDP2 layers. To make a sprite fully opaque, selectively turn color calculation off for it by
-             *  assigning it to use a Priority Bank containing a priority layer that does not satisfy the Color Condition.
+             *  assigning it to use a Priority Bank containing a layer that does not satisfy the chosen Color Condition.
              *  The default VDP2 initialization uses ColorCondition::PriorityEquals Priority::Layer4,
-             *  with SpriteBank0 set to Layer3 and SpriteBank1 set to Layer4. With this config RGB sprites receive no VDP2
-             *  color calculation, while Palette sprites only receive color calculation when they select priority from SpriteBank1
+             *  with Priority Bank0 set to Layer3 and Priority Bank1 set to Layer4. With this config RGB sprites receive no VDP2
+             *  color calculation, while Palette sprites only receive color calculation when they select priority from Bank1
              * @param Condition The type of condition that VDP2 Color Calculation will follow.
              * @param TestValue The Layer that a sprite's priority will be tested against in the condition.
              */
@@ -1979,7 +1986,10 @@ namespace SRL
             SRL::VDP2::NBG3::ScrollEnable();
             SRL::VDP2::NBG0::ScrollDisable(); // We don't want this on by default anymore
             // Fix param table at top of VRAM outside range of allocator - now user calls to slPerspective will always update here:
+            SRL::VDP2::SpriteLayer::SetPriority(VDP2::Priority::Layer3,VDP2::SpriteBank::Bank0);
+            SRL::VDP2::SpriteLayer::SetPriority(VDP2::Priority::Layer4,VDP2::SpriteBank::Bank0);
             slRparaInitSet((ROTSCROLL*)(VDP2_VRAM_B1 + 0x1ff00));
+            VDP2_RAMCTL&=0xff00;
         }
 
         /** @brief Data structure of a VDP2 color offset to be set in Offset A or Offset B

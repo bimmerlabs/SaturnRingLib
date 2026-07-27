@@ -382,7 +382,7 @@ namespace SRL
 
                 (Scene2D::Effects.Clipping << 9) |
                 (Scene2D::Effects.ScreenDoors << 8) |
-                colorMode |
+                colorMode | 
                 (Scene2D::Effects.EndCode ? ECenb : ECdis) |
                 (Scene2D::Effects.HighSpeedShrink ? HSSon : HSSoff) |
                 (Scene2D::Effects.DisablePreClipping ? Pclpoff : Pclpon) |

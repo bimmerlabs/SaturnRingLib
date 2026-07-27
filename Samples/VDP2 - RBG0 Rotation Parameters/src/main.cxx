@@ -21,9 +21,9 @@ int main()
     Vector3D Rbg0PositionSecondary(0.0,-40.0,80.0);//40 units below camera for ground
     Angle Rbg0RotationSecondary = Angle::FromDegrees(0.0);//we will also make the clouds rotate
     
-    SRL::Tilemap::Interfaces::CubeTile* TestTilebin= new SRL::Tilemap::Interfaces::CubeTile("TESTN.BIN");//Load ground tilemap from cd to work RAM
+    SRL::Tilemap::Interfaces::CubeTile* TestTilebin= new SRL::Tilemap::Interfaces::CubeTile("GROUND.BIN");//Load ground tilemap from cd to work RAM
     
-    SRL::Tilemap::Interfaces::CubeTile *TestTilebinB= new SRL::Tilemap::Interfaces::CubeTile("FOG256.BIN");//Load fog tilemap from cd to work RAM
+    SRL::Tilemap::Interfaces::CubeTile *TestTilebinB= new SRL::Tilemap::Interfaces::CubeTile("CLOUDS.BIN");//Load fog tilemap from cd to work RAM
     
     //This new overload allows transferring both tilemaps to VRAM and initializing their rotation modes all in one go:
     SRL::VDP2::RBG0::LoadTilemap(*TestTilebin,*TestTilebinB, SRL::VDP2::RotationMode::TwoAxis,SRL::VDP2::RotationMode::TwoAxis);

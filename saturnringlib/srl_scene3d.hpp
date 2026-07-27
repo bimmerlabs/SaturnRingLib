@@ -85,7 +85,7 @@ namespace SRL
          */
         static void LightInitGouraudTable(uint32_t gouraudRamOffset, uint8_t* vertexCalculationBuffer, Types::HighColor* tableStorage, uint32_t maxPolygons)
         {
-            slInitGouraud((GOURAUDTBL*)tableStorage, maxPolygons, 0xe000 + (gouraudRamOffset << 2), vertexCalculationBuffer);
+            slInitGouraud((GOURAUDTBL*)tableStorage, maxPolygons, 0xe000 + (gouraudRamOffset<<2) , vertexCalculationBuffer);
         }
 
         /** @brief Set custom light gouraud table. Affects quads with SRL::Types::Attribute::DisplayOption::EnableGouraud option set

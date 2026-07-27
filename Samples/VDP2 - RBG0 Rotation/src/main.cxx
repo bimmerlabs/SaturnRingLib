@@ -3,6 +3,7 @@ This Demo Demonstrates how to configure a rotating scroll and provides an intera
 showcase of the differences in rotation behavior between rotation modes. Since VRAM demands
 increase with the number of rotation axis used, It is recommended to select the minimum
 Number of Axis Required for your desired use case.
+
 */
 #include <srl.hpp>
  
@@ -15,6 +16,16 @@ static void LoadRBG0(uint8_t config, SRL::Tilemap::ITilemap* map)
     SRL::VDP2::RBG0::ScrollDisable();//turn off scroll display so we dont see junk when loading to VRAM
     SRL::VDP2::ClearVRAM();//Clearing VDP2 VRAM because use differs between Rotation Modes
     SRL::VDP2::RBG0::LoadTilemap(*map);//Transfer Tilemap to VRAM again
+    uint8_t mapLayout[4][4] = 
+    {
+        0,1,0,1,
+        0,1,0,1,
+        0,1,0,1,
+        0,1,0,1,
+    };
+
+    //set the multi plane layout of Primary Tilemap 
+    SRL::VDP2::RBG0::SetPlanes(mapLayout);
     switch (config)
     {
     case 0:
@@ -55,7 +66,7 @@ int main()
     
     int8_t CurrentMode = 0;
    
-    SRL::Tilemap::Interfaces::CubeTile* TestTilebin = new SRL::Tilemap::Interfaces::CubeTile("FOGRGB.BIN");//Load tilemap from cd to main RAM
+    SRL::Tilemap::Interfaces::CubeTile* TestTilebin = new SRL::Tilemap::Interfaces::CubeTile("FOG256.BIN");//Load tilemap from cd to main RAM
    
     LoadRBG0(0, TestTilebin);
 
@@ -70,7 +81,7 @@ int main()
     SRL::Debug::Print(1, 6, "<X [Rotate X] A>");
     SRL::Debug::Print(1, 7, "<Y [Rotate Y] B>");
     SRL::Debug::Print(1, 8, "<Z [Rotate Z] C>");
-  
+    
     //Main Game Loop 
     while(1)
     {

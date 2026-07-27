@@ -75,7 +75,7 @@ int main()
 
     // Initializes gouraud table work area
     SRL::Scene3D::LightInitGouraudTable(0, vertWork, workTable, polygons);
-
+    
     // Sets current light shading table
     SRL::Scene3D::LightSetGouraudTable(shadingTable);
 
