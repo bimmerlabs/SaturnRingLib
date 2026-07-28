@@ -32,6 +32,14 @@ ifneq ($(strip $(MODULES_EXTRA)),)
 	MODULE_EXTRA_INC += $(patsubst %, -I$(SDK_ROOT)/../modules_extra/%/INC, $(strip $(MODULES_EXTRA)))
 	MODULE_OBJECTS = $(MODULE_SOURCES:.c=.o)
 	OBJECTS += $(MODULE_OBJECTS:.cxx=.o)
+copy_data_files:
+	@for dir in $(patsubst %,$(SDK_ROOT)/../modules_extra/%/data/,$(strip $(MODULES_EXTRA))); do \
+		if [ -d "$$dir" ]; then \
+			echo "Found $$dir, copying..."; \
+			cp -rf "$$dir." ./cd/data/; \
+		fi; \
+	done
+all: copy_data_files
 endif
 
 COBJECTS = $(SOURCES:.c=.o)
@@ -69,6 +77,11 @@ endif
 
 ifeq ($(strip ${SRL_MAX_CD_RETRIES}),)
 	SRL_MAX_CD_RETRIES=5
+endif
+
+# Use TLSF by default if not specified otherwise
+ifeq ($(strip ${SRL_MALLOC_METHOD}),)
+	SRL_MALLOC_METHOD = TLSF
 endif
 
 ifeq ($(strip ${SRL_HIGH_RES}), 1)
@@ -157,6 +170,13 @@ else
 	SYSFLAGS += -DSGL_MAX_WORKS=256
 endif
 
+# Set slave command buffer size, use 70k by default, should be aligned to 0x10
+ifneq ($(strip ${SGL_SLAVE_BUF_SIZE}),)
+	SYSFLAGS += -DSGL_SLAVE_BUF_SIZE=$(strip ${SGL_SLAVE_BUF_SIZE})
+else
+	SYSFLAGS += -DSGL_SLAVE_BUF_SIZE=71680
+endif
+
 # Add custom FLAGS
 ifneq ($(strip ${SRL_CUSTOM_CCFLAGS}),)
 	CCFLAGS += $(strip ${SRL_CUSTOM_CCFLAGS})
@@ -174,10 +194,11 @@ SATURNMATHPPDIR = $(MODDIR)/SaturnMathPP
 
 SYSSOURCES += $(SGLLDIR)/../SRC/workarea.c
 
+# Include TLSF sources if required
 ifdef SRL_MALLOC_METHOD
-	ifeq ($(SRL_MALLOC_METHOD), TLSF)
+	ifeq ($(strip ${SRL_MALLOC_METHOD}),TLSF)
 		SYSSOURCES += $(TLSFDIR)/tlsf.c
-		USE_TLSF_ALLOCATOR := TRUE
+		CCFLAGS +=-DUSE_TLSF_ALLOCATOR -I$(TLSFDIR)
 	endif
 endif
 
@@ -185,7 +206,7 @@ SYSOBJECTS = $(SYSSOURCES:.c=.o)
 
 # General compilation flags
 CCFLAGS += $(SYSFLAGS) -W -m2 -c -O2 -Wno-strict-aliasing \
-					-I$(DUMMYIDIR) -I$(SATURNMATHPPDIR) -I$(SGLIDIR) -I$(STDDIR) -I$(TLSFDIR) -I$(SDK_ROOT) $(MODULE_EXTRA_INC)
+					-I$(DUMMYIDIR) -I$(SATURNMATHPPDIR) -I$(SGLIDIR) -I$(STDDIR) -I$(SDK_ROOT) $(MODULE_EXTRA_INC)
 LDFLAGS = -m2 -L$(SGLLDIR) -Xlinker -T$(LDFILE) -Xlinker -Map \
 					-Xlinker "$(BUILD_MAP)" -Xlinker -e -Xlinker ___Start -nostartfiles
 
@@ -238,10 +259,10 @@ compile_objects : $(OBJECTS) $(SYSOBJECTS)
 	@test -f $(ASSETS_DIR)/ABS.TXT || echo "NOT Abstracted by SEGA" >> $(ASSETS_DIR)/ABS.TXT
 	@test -f $(ASSETS_DIR)/BIB.TXT || echo "NOT Bibliographiced by SEGA" >> $(ASSETS_DIR)/BIB.TXT
 	@test -f $(ASSETS_DIR)/CPY.TXT || touch $(ASSETS_DIR)/CPY.TXT
-	$(CC) $(LDFLAGS) $(SYSOBJECTS) $(OBJECTS) $(LIBS) -o "$(BUILD_ELF)"
+	$(CC) $(LDFLAGS) $(SYSOBJECTS) $(OBJECTS) -Wl,-bcoff-sh $(LIBS) -Wl,-belf32-sh -o "$(BUILD_ELF)"
 
 convert_binary : compile_objects
-	$(OBJCOPY) -O binary "$(BUILD_ELF)" ./cd/data/0.bin
+	$(OBJCOPY) -O binary -R WORK_AREA* -R COMMAND_BUF* -R SYSTEM_START* -R SYSTEM_END* "$(BUILD_ELF)" ./cd/data/0.bin
 
 create_iso : convert_binary
 ifeq ($(strip ${SRL_USE_SGL_SOUND_DRIVER}),1)
@@ -330,7 +351,7 @@ convert_audio_to_raw() { \
 		else \
 			sox "$$audiofile" -t raw -r 44100 -e signed-integer -b 16 -c 2 "$$rawfile"; \
 		fi; \
-		size=$$(stat -c%s "$$rawfile"); \
+		size=$$(stat -f%z "$$rawfile" 2>/dev/null || stat -c%s "$$rawfile"); \
 		target_sectors=$$((size / 2352)); \
 		if [ $$((size % 2352)) -ne 0 ]; then \
 			target_sectors=$$((target_sectors + 1)); \
@@ -351,8 +372,8 @@ endef
 add_audio_to_bin_cue: create_bin_cue
 	@$(CONVERT_AUDIO_TO_RAW); \
 	track=2; \
-	total_size=$$(stat -c%s "$(BUILD_BIN)"); \
-  sectors=$$((total_size / 2352)); \
+	total_size=$$(stat -f%z "$(BUILD_BIN)" 2>/dev/null || stat -c%s "$(BUILD_BIN)"); \
+ 	sectors=$$((total_size / 2352)); \
 	echo "Starting with $$total_size bytes ($$sectors sectors)"; \
 	# Find audio files and convert them to raw \
 	if [ -f "$(MUSIC_DIR)/tracklist" ]; then \
@@ -421,7 +442,7 @@ add_audio_to_bin_cue: create_bin_cue
 			exit 1; \
 		fi; \
 		echo '    INDEX 01' $$msf >> "$(BUILD_CUE)"; \
-		size=$$(stat -c%s "$$i"); \
+		size=$$(stat -f%z "$$i" 2>/dev/null || stat -c%s "$$i"); \
 		if [ $$((size % 2352)) -ne 0 ]; then \
 			echo "  ERROR: File $$i is not sector-aligned ($$size bytes)"; \
 			echo "  File size must be a multiple of 2352 bytes"; \

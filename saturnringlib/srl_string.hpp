@@ -120,7 +120,7 @@ namespace SRL
         }
 
          /**
-         * @brief Extension of snprintf with support of SRL::Math::Types::Fxp. Supported format especifiers %c , %s , %u , %d, and %f. %f is used for FXP types.
+         * @brief Extension of snprintf with support of SRL::Math::Types::Fxp. Supported format specifiers %c , %s , %u , %d, %x and %f. %f is used for FXP types. %0Nd where N is the total lenght of the printed number. If under N , the number will be padded with 0's until the printed string has N characters
          * @param buffer Buffer where the string will be written to
          * @param size maximum size of string to be written into buffer
          * @param format format string
@@ -218,6 +218,21 @@ namespace SRL
                                 }
                             }
                         break;
+                        case 'x' : //hexadecimal
+                            {
+                                char tmp[100] = {0};
+                                int arg = va_arg(args, int);
+                                snprintf(tmp, 100, "%x", arg);
+                                for(int jdx = 0; tmp[jdx] != 0 ; jdx++ , writtenChars++)
+                                {
+                                    if(writtenChars < size)
+                                    {
+                                        buffer[writtenChars] = tmp[jdx];
+                                    }
+                                    
+                                }
+                            }
+                        break;
                         case 'u' : //unsigned int
                             {
                                 char tmp[100] = {0};
@@ -245,17 +260,12 @@ namespace SRL
                             //determine if value is negative
                             bool isNegative = val < 0;
         
-                            //get the abosule value (why not just use abs() here ?)
                             uint32_t absValue = static_cast<uint32_t>(isNegative ? -val : val);
-                           
                             int32_t IntegerPart = absValue  >> 16;
-        
-                            uint32_t maskFractional = 0xffff;
-                            uint32_t FractionPart = absValue & maskFractional ;
-        
+                                                             
                             // Scale fractional part to 5 decimal digits
-                            FractionPart = (FractionPart * 100000 + 0x8000) >> 16;
-        
+                            int32_t FractionPart = SRL::Math::Abs((arg->GetFraction() * 1.5258789).RawValue());
+                            
                             if(isNegative)
                             {
                                 tmpBuffer[bufferPos++] = '-';

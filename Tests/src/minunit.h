@@ -104,7 +104,7 @@ extern "C"
 	minunit_status = 0;                                              \
 	test();                                                          \
 	++minunit_run;                                                   \
-	if (minunit_output_header)                                   	 \
+	if (minunit_status && minunit_output_header)                 \
 			(*minunit_output_header)();  							 \
 	if (minunit_status) {                                            \
 		++minunit_fail;												 \

@@ -1,3 +1,3 @@
-:; "../tools/scripts/make.sh" $1 ../Compiler; exit;
+:; "../tools/scripts/make.sh" "$@"; exit;
 @ECHO Off
-"../tools/scripts/make.bat" %1 ../Compiler
+"../tools/scripts/make.bat" %*

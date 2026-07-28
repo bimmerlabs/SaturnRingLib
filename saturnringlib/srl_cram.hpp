@@ -72,7 +72,7 @@ namespace SRL
             {
                 if (mode == CRAM::TextureColorMode::RGB555)
                 {
-                    this->data == nullptr;
+                    this->data = nullptr;
                 }
                 else
                 {

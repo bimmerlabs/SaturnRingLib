@@ -7,6 +7,10 @@
 /[Dd]ocumentation/*
 !/[Dd]ocumentation/resources
 
+/[Mm]odules_extra/**
+!/[Mm]odules_extra/Put_extra_modules_here.txt
+!/[Mm]odules_extra/samplemodule/**
+
 /[Mm]odules/[Ss][Gg][Ll]/[Dd]ocumentation/*
 !/[Mm]odules/[Ss][Gg][Ll]/[Dd]ocumentation/resources
 /[Mm]odules/[Ss][Gg][Ll]/[Ii][Pp]/[Bb]uild[Dd]rop/**
@@ -14,6 +18,7 @@
 /[Mm]odules/[Ss][Gg][Ll]/[Ss][Rr][Cc]/*.o
 /[Mm]odules/[Tt][Ll][Ss][Ff]/*.o
 
+/[Ss]amples/**/imgui.ini
 /[Ss]amples/**/*.o
 /[Ss]amples/**/[Bb]uild[Dd]rop/**
 /[Cc]ompiler/msys2/tmp/*
@@ -46,7 +51,10 @@
 
 /[Tt]ests/**/[Bb]uild[Dd]rop/**
 /[Tt]ests/**/*.o
+/[Tt]ests/**/imgui.ini
 /[Tt]ests/**/*.log
+/[Tt]ests/uts.json
+/[Tt]ests/uts.xml
 
 /Projects/**
 !/Projects/Put_your_projects_here.txt
@@ -55,3 +63,8 @@
 # Compiler folder
 /[Cc]ompiler/**
 Compiler/
+
+# Python bytecode
+**/__pycache__/
+**/*.pyc
+
