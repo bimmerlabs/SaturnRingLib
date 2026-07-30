@@ -8,7 +8,6 @@
 #include "srl_cd.hpp"
 #include "srl_tilemap_interfaces.hpp"
 
-//Test Changes
 namespace SRL
 {
     /** @brief VDP2 control
@@ -605,9 +604,9 @@ namespace SRL
             *   @details A scrollscreen that is Registered to the Ascii Scroll will remain 
             *   registered even if VDP2::ClearVRAM() is called. It will automatically unregister
             *   and revert to normal loading when it's LoadTilemap()/LoadBitmap() method is next called.
-            *   @note  -The Ascii Scroll is not compatible with Rotation Scroll RBG0
-            *   @note  -The Ascii Scroll was designed to have its position fixed on screen, and may display garbage data if
-            *   its position is offset.
+            *   @note  -The Ascii Scroll is not compatible with Rotation Scroll RBG0.
+            *   @note  -The Ascii Scroll was designed to have its position fixed on screen, and may display garbage 
+            *   data in the margins if its position is offset or used in High res mode without proper scaling.
             *   @note  -The Ascii scroll data is stored outside The VRAM Alloacator's valid memory region, so 
             *   can not be written to with the standard ScrollScreen loading functions. Manage loading
             *   fonts with the SRL::ASCII module instead. 
@@ -876,7 +875,7 @@ namespace SRL
                 {
                     for (uint16_t j = 0; j < info.MapWidth; j++)
                     {
-                        if (info.MapMode) *VRAM++ = ((*mapData++) + mapoff) | (paloff << 12); // 1WORD data
+                        if (info.MapMode) *VRAM++ = ((*mapData++) + mapoff) | (paloff << 12); // 1WORD datal
                         else *VRAM32++ = ((*Data32++) + mapoff) | (paloff << 20); // 2WORD data
                     }
                 }
@@ -1244,30 +1243,29 @@ namespace SRL
 
         /** @brief Options for treating display of rotation parameters outside of the
          * main tilemap/bitmap area.
-         * @details when 3d rotation is simulated, some perspectives may display
-         * areas on screen that are beyond the 4x4 plane area defined by the tilemap.
+         * @details when 3d rotation and scaling is simulated, some perspectives may display
+         * areas on screen that extend beyond the 4x4 plane area defined by the tilemap data.
          * Use these options with RBG0::SetOverDisplayA/B to specify what to display in 
-         * these areas.
+         * those areas.
         */
         enum class OverPattern
         {
            
-             /** @brief Screen areas outside the map repeat the full tilemap pattern
+             /** @brief Screen areas outside the map repeat the full tilemap pattern (Default)
              */
             RepeatMap,
 
-            /** @brief Screen areas outside the map repeat a single selectable tile from the 
-            *   tileset
+            /** @brief Screen areas outside the map repeat a single selectable tile from the map's tileset.
             *   @note Not available in Bitmap Mode
             */
             RepeatTile,
 
-            /** @brief Screen areas outside the map are treated as transparent pixels
+            /** @brief Screen areas outside the map area are treated as transparent pixels
             */
             Transparent,
 
             /** @brief Areas outside a 512x512 square centered at  coordintate [256,256]
-            *  are made transparent regardless of the underlying map size 
+            *  are made transparent regardless of the underlying map area 
             */
             Transparent512x512,
 
@@ -1277,19 +1275,19 @@ namespace SRL
          */
         enum class SwitchMode
         {
-            /** @brief Only display Tilemap A (Primary Tilemap and rotation params)
+            /** @brief Only display Primary Tilemap and rotation params
              */
             OnlyPrimary = 0,
 
-             /** @brief Only display Tilemap B (Secondary Tilemap and rotation params)
+             /** @brief Only display Secondary Tilemap and rotation params
              */
             OnlySecondary = 1,
 
             /** @brief Switch RBG0 Tilemap display based on perspective of Tilemap A
-             *  @details In regions of the screen beyond parameter A's simulated 'horizon'*,
-             *  Rotation parameter B will be displayed 
-             *  @note -*(More technically, any screen coordinate where the scaling coefficient data
-             *  read for Parameter A has its high bit set to 1 will display Parameter B data instead). 
+             *  @details In regions of the screen beyond the Primary Parameter's simulated 'horizon'*,
+             *  the Secondary Parameter will be displayed instead.
+             *  @note -*(More technically, any screen coordinate where the scaling coefficient 
+             *  read for the primary parameter has its high bit set to 1 will display Parameter B data instead). 
              *  @note - Only Parameter A can display 3 Axis (Per Dot) Rotation in this mode.
             */
             PerspectiveSwitch,
@@ -1297,16 +1295,24 @@ namespace SRL
             /** @brief Switch RBG0 rotation display based on a VDP2 window
              *  @details Rotation A displays in regions inside the selected VDP2 window While
              *  Rotation B displays outside the window
-             *  @note - This is the only avaiable mode where Parameter A and B can 
+             *  @note - This is the only avaiable mode where Primary and Secondary Parameters can
              *  Simultaneously display 3 Axis (Per Dot) Rotation.
             */
             WindowSwitch,
 
         };
-
+        
+        /** @brief Used to select between the 2 Rotation Parameters on RBG0: Primary or Secondary.
+         * Primary rotation parameter controls the display of the Primary Tilemap, Secondary Parameter controls 
+         * display of the Secondary Tilemap.
+         */
         enum class RotationParameter : uint16_t
         {
+            /** @brief Select Primary Rotation Parameter (RA) 
+            */
             Primary = RA,
+            /** @brief Select Secondary Rotation Parameter (RB) 
+            */
             Secondary = RB,
         };
 
@@ -1331,7 +1337,7 @@ namespace SRL
             {
                 if(info.MapMode!= RBG0::Info.MapMode || info.SGLColorMode()!=RBG0::Info.SGLColorMode()||info.CharSize!=RBG0::Info.CharSize)
                 {
-                    SRL::Debug::Assert("RBG0 Tilemap B Init Failed: Tilemap B format does not match primary tilemap");
+                    SRL::Debug::Assert("RBG0 Secondary Tilemap Init Failed: Format does not match primary tilemap");
                     return false;
                 }
                 slPlaneRB(info.PlaneSize);
@@ -1447,10 +1453,13 @@ namespace SRL
             }
             
             /** @brief Initializes the ScrollScreen's tilemap specifications
+             * @details Initailization is performed automatically when using the built in 
+             * LoadTilemap functions. This function is only required when performing custom loading
+             * routines. Ensure that VRAM for Cell and Map data has already been allocated before calling.
              * @param info Tile map info
-             * @note This function initializes both parameters RA and RB to use 
-             * the primary tilemap. To use a secondary tilemap in RB, call LoadTilemapB()/InitB()
-             * after loading and initializing the primary tilemap.
+             * @note This function initializes both rotation parameters using the same  
+             * source tilemap. To use a secondary tilemap in RB, use the respective 
+             * overloads
              */
             inline static void Init(SRL::Tilemap::TilemapInfo& info)
             {
@@ -1466,6 +1475,9 @@ namespace SRL
             }
 
             /** @brief Initializes the ScrollScreen's bitmap specifications
+             *  @details Initailization is performed automatically when using the built in 
+             * LoadBitmap function. This function is only required when performing custom loading
+             * routines. Ensure that VRAM has already been allocated before calling.
              * @param info bitmap info
              */
             static void Init(SRL::Bitmap::BitmapInfo& info)
@@ -1485,7 +1497,10 @@ namespace SRL
             }
             
             /** @brief Overload initializes Primary and Secondary rotation parameters to separate source tilemaps
-             *  @note Initialization fails if infoA and infoB do not share the same configurations for
+             *  @details Initailization is performed automatically when using the built in 
+             *  LoadTilemap functions. This function is only required when performing custom loading
+             *  routines. Ensure that VRAM for Cell and Map data has already been allocated before calling.
+             *  @note Initialization for Secondary fails if it does not share the same configuration as Primary for
              *  color depth, tile size, and map data type.
              *  @param infoA Tilemap info of primary tilemap to initialize
              *  @param infoB Tilemap info of secondary tilemap to initialize 
@@ -1509,7 +1524,7 @@ namespace SRL
                 LoadTilemap(tilemap,LoadPalette);
             }
             
-            /** @brief Load and configure both primary and secondary Tilemaps
+            /** @brief Load and configure both a Primary and Secondary Tilemap
              *  @details Overload to load and configure both primary and secondary tilemaps on RBG0.
              *  The SwitchMode will be initialized to UsePerspective. Use SetSwitchMode() after loading
              *  to change the setting if desired.
@@ -1520,9 +1535,8 @@ namespace SRL
              *  @param LoadPalette (optional) set false to disable auto loading of palette data (default = true)
              *  @note -Due to shared registers, the Secondary Tilemap must have the same underlying data format as the
              *  Primary Tilemap (color depth, tile size, map data type). Furthermore its data must be able to fit within the same
-             *  Reserved VRAM banks as the corresponding primary data ((celDataA + celDataB) <= 0x20000 bytes and (mapDataA+mapDataB)<=0x20000 bytes)
-             * 
-             * -See VDP2::Switchmode documentation for limits on rotation modes for A and B under various conditions.
+             *  Reserved VRAM banks as the corresponding primary data ((celDataA + celDataB) <= 0x20000 bytes and (mapDataA+mapDataB)<=0x20000 bytes).
+             *  @note -See VDP2::Switchmode documentation for limits on rotation modes for A and B under various conditions.
              */ 
             inline static void LoadTilemap(SRL::Tilemap::ITilemap& tilemapA,SRL::Tilemap::ITilemap& tilemapB, VDP2::RotationMode modeA,VDP2::RotationMode modeB, bool LoadPalette = true)
             {
@@ -1531,12 +1545,12 @@ namespace SRL
                 LoadTilemapB(tilemapB);
             }
 
-            /** @brief Sets How screen regions outside the tilemap area are displayed by a rotation parameter
-             *  @param param The Rotation parameter that will be set(primary or secondary)
+            /** @brief Sets How screen regions outside the tilemap area are displayed by the rotation parameters
+             *  @param param The Tilemap/Rotation Parameter that is being set(primary or secondary)
              *  @param mode the display mode to select
-             *  @param tileIndex (Optional)The tile index to display in exterior regions if RepeatTile is
-             *  selected as mode (defaults to tile 0)
-             *  @note see OverPattern documentatioin for descriptions of available modes 
+             *  @param tileIndex (Optional) The tile index to display in exterior regions if RepeatTile is
+             *  selected as mode (defaults to tile 0 if not specified)
+             *  @note See OverPattern documentatioin for descriptions of available modes 
              */ 
             inline static void SetOverDisplay(VDP2::RotationParameter param, VDP2::OverPattern mode, uint16_t tileIndex = 0)
             {
@@ -1552,29 +1566,31 @@ namespace SRL
                 }
             }
            
-            /** @brief Sets Condition for displaying Primary and Secondary parameters/Tilemaps on screen.
+            /** @brief Sets the condition for switching between display of Primary and Secondary parameters/Tilemaps on screen.
              * @param mode the display mode to select
-             * @note See SwitchMode documentation for description of available modes
-             * @note If a mode is selected that displays Secondary Parameter (RB) but no
-             * tilemap has previously been loaded to display on it, RB will use the same
-             * source tilemap as primary parameter (RA)
+             * @note See VDP2::SwitchMode documentation for description of available modes
+             * @note If a mode is selected that includes display of Secondary Parameter (RB) when no
+             * secondary tilemap has been loaded, it will use the same
+             * source tilemap as the primary parameter.
              */ 
-            inline static void SetParameterDisplay(SwitchMode mode)
+            inline static void SetParameterMode(SwitchMode mode)
             {
                 slRparaMode((uint16_t)mode);
             }
             
-            /** @brief Select what type of rotation to use for the rotating scroll (Call before Loading RBG0)
+            /** @brief Select what type of rotation to use for the rotating scroll.
+             * @details This initializes both Primary and Secondary parameters to the same mode.
+             * Use the overload to initialize separate modes for each.
              * @param mode The RotationMode to use for RBG0
-             * @param vblank (Optional) update VRAM at VBLANK to reduce amount of coefficient
-             * data required for rotation (default = true)
-             * @note when 2 or 3 axis rotation is selected, VRAM will be allocated to store
-             * necessary scaling coefficients. If Vblank is set false, all coefficients will be
-             * statically stored in VRAM as a 0x18000 byte table. If Vblank is set true, select
-             * coefficients for the perspective of the current frame will be dynamically 
-             * sent to VRAM during Vblank, reducing VRAM footprint to 0x2000 bytes per
-             * rotation parameter but increasing required Vblank overhead. If the transfer can 
-             * not complete within Vblank window, screen tearing may be visible in the plane.
+             * @param vblank (Optional) Chose to update VRAM at VBLANK to reduce amount of stored coefficient
+             * data required (default = true).
+             * When 2 or 3 axis rotation is selected, VRAM is allocated to store the
+             * required scaling coefficients. If vblank is set false, all possible coefficients will be
+             * statically stored in VRAM as a 0x18000 byte table. If vblank is set true,
+             * select coefficients for the next frame's perspective will be dynamically written 
+             * to VRAM during Vblank, reducing the VRAM footprint to 0x2000 bytes per
+             * rotation parameter. If this transfer can not complete within the Vblank window
+             * screen tearing may be visible in the plane.
              */
             inline static void SetRotationMode(VDP2::RotationMode mode, bool vblank = true)
             {
@@ -1584,12 +1600,12 @@ namespace SRL
                 {
                     if(vblank==true)
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B1, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B0, 0);
                         VDP2::RBG0::KtableAddressB =(void*)((uint32_t)VDP2::RBG0::KtableAddress+0x2000);                         
                     }
                     else
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B1, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B0, 0);
                         VDP2::RBG0::KtableAddressB =  VDP2::RBG0::KtableAddress;
                         slMakeKtable(VDP2::RBG0::KtableAddress);
                         kflag = K_FIX;
@@ -1617,18 +1633,18 @@ namespace SRL
             }
             
             /** @brief Overload to select separate rotation modes for both the primary and secondary
-             * rotating planes
-             * @param modeA The RotationMode to use for primary rotation
-             * @param modeB The RotationMode to use for secondary rotation
-             * @param vblank (Optional) Chose to update VRAM at VBLANK to reduce amount of coefficient
-             * data required for rotation of a plane (default = true)
-             * @note when 2 or 3 axis rotation is selected, VRAM will be allocated to store
-             * necessary scaling coefficients. If Vblank is set false, all possible coefficients will be
-             * statically stored in VRAM as a 0x20000 byte table. If Vblank is set true, the
-             * the coefficients for the current frame will be dynamically written 
-             * to VRAM at each Vblank, reducing VRAM footprint to 0x2000 bytes per
-             * rotation parameter but increasing required Vblank overhead. If the transfer can 
-             * not complete within the Vblank window, screen tearing may be visible in the plane.
+             * rotating planes. 
+             * @param modeA The RotationMode to use for primary tilemap
+             * @param modeB The RotationMode to use for secondary tilemap
+             * @param vblank (Optional) Chose to update VRAM at VBLANK to reduce amount of stored coefficient
+             * data required (default = true).
+             * When 2 or 3 axis rotation is selected, VRAM is allocated to store the
+             * required scaling coefficients. If vblank is set false, all possible coefficients will be
+             * statically stored in VRAM as a 0x18000 byte table. If vblank is set true,
+             * select coefficients for the next frame's perspective will be dynamically written 
+             * to VRAM during Vblank, reducing the VRAM footprint to 0x2000 bytes per
+             * rotation parameter. If this transfer can not complete within the Vblank window
+             * screen tearing may be visible in the plane.
              */  
             inline static void SetRotationMode(VDP2::RotationMode modeA, VDP2::RotationMode modeB, bool vblank = true)
             {
@@ -1638,12 +1654,12 @@ namespace SRL
                 {
                     if(vblank==true)
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B1, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x4000, 0x20000, VDP2::VramBank::B0, 0);
                         VDP2::RBG0::KtableAddressB = (void*)((uint32_t)VDP2::RBG0::KtableAddress+0x2000);                        
                     }
                     else
                     {
-                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B1, 0);
+                        VDP2::RBG0::KtableAddress = VDP2::VRAM::Allocate(0x18000, 0x20000, VDP2::VramBank::B0, 0);
                         VDP2::RBG0::KtableAddressB =  VDP2::RBG0::KtableAddress;
                         slMakeKtable(VDP2::RBG0::KtableAddress);
                         kflag = K_FIX;
@@ -1684,7 +1700,7 @@ namespace SRL
 
             /** @brief Writes the current matrix transform to RBG0 rotation parameters
              * to update its perspective
-             * @param param selects which rotation parameter to write the matrix to (defaults to Primary)
+             * @param param  selects which rotation parameter to write the matrix to (optional- defaults to Primary)
              */
             inline static void SetCurrentTransform(VDP2::RotationParameter param = VDP2::RotationParameter::Primary)
             {
@@ -1708,15 +1724,15 @@ namespace SRL
                 sl1MapRB(b);
             }
             
-            /** @brief Sets the planes of Tilemap Data to be displayed with 16 planes
-             * @details Unlike NBG scrolls RBG0 only loads with the default of 1 plane. Use this
-             * function after loading to set the arrangement of multi plane tilemaps within a 4x4 grid:
+            /** @brief Sets the layout of Tilemaps comprised of multiple planes from a 4x4 grid of plane indices
+             * @details Unlike NBG scrolls RBG0 only loads with the default repetition of 1 plane of tilemap data. Use this
+             * function after loading to set the layout planes of larger multi-plane tilemaps within a 4x4 grid:
              *      |a,b,c,d|
              *      |e,f,g,h|
              *      |i,j,k,l|
              *      |m,n,o,p|
              * @param layout 4x4 array of uint8_t indices representing the index of each plane in the map data
-             * (index 0 = base address of the map data, increment by 1 per plane unit of map data stored)
+             * (index 0 = first plane of the map data, increments by 1 per plane of map data stored)
              * @param param The Rotation parameter whose map is being set: primary or secondary (defaults to primary)
              * @note No check is performed to ensure the indecies entered are within the bounds of
              * the scroll's map data. Specifying indices larger than the number of planes loaded 
@@ -1772,7 +1788,7 @@ namespace SRL
             Bank7 = scnSPR7,
         };
 
-        /** @brief Interface to control VDP2 settings for the Sprite Layer (data read from VDP1 framebuffer),
+        /** @brief Interface to control VDP2 settings for the Sprite Layer (data from the VDP1 framebuffer),
          * such as Display priority and VDP2 color calculation)
          */
         class SpriteLayer
@@ -1799,7 +1815,7 @@ namespace SRL
              * one of the 32 color calculation ratios that the system can use (value is floored to the nearest ratio).
              * It then sets the ratio in the specified sprite cc register (cc register 0 if not specified)
              * @note -Color ratios only apply to highest priority pixels in frame
-             * @note -When Color Calc is ON, max opacity is ~(0.97). Fully opaque sprites must select with color condition
+             * @note -When Color Calc is ON, max opacity is ~(0.97). Fully opaque sprites must be excluded by the color condition.
              * @note -When ColorCalcMode is set to UseColorAddition, The Opacity levels are ignored
              * and Color addition is applied to all sprites whose priority meets the color condition (see SpriteLayer::SetColorCondition() for details)
              * @note -RGB sprites always use the opacity set in CC register[bank0]
@@ -1839,7 +1855,7 @@ namespace SRL
              * @details Sets up a condition that allows only select sprites to receive Half Transparent
              *  color calculation with VDP2 layers. To make a sprite fully opaque, selectively turn color calculation off for it by
              *  assigning it to use a Priority Bank containing a layer that does not satisfy the chosen Color Condition.
-             *  The default VDP2 initialization uses ColorCondition::PriorityEquals Priority::Layer4,
+             *  The default VDP2 initialization uses [ColorCondition::PriorityEquals] [Priority::Layer4],
              *  with Priority Bank0 set to Layer3 and Priority Bank1 set to Layer4. With this config RGB sprites receive no VDP2
              *  color calculation, while Palette sprites only receive color calculation when they select priority from Bank1
              * @param Condition The type of condition that VDP2 Color Calculation will follow.
@@ -1928,7 +1944,7 @@ namespace SRL
             VDP2_RAMCTL &= 0xff00;
             //Clear MapBank Flags:
             VDP2::VRAM::MapBankA0 = VDP2::VRAM::MapBankB0 = false;
-            //leave cylces reserved for ASCII 
+            //keep 2 cycle slots reserved for ASCII 
             VDP2::VRAM::bankCycles[3] = 2;
         }
 
@@ -1993,10 +2009,10 @@ namespace SRL
         }
 
         /** @brief Data structure of a VDP2 color offset to be set in Offset A or Offset B
-         *  @details The offset data that will be set is a signed 9 bit value per color channel.
+         *  @details The offset data is a signed 9 bit value per color channel.  
          *  The valid range of inputs is -255 to +255. The sign determines whether the color offset 
-         *  is additive or subtractive. Values outside the range will be clamped on initialization.
-         *  See SetColorOffsetA and SetColorOffsetB for more details. 
+         *  is additive or subtractive on that channel. Values outside the range will be clamped on initialization.
+         *  See SetColorOffsetA and SetColorOffsetB for more details on setting up a VDP2 color offset. 
          */
         struct ColorOffset
         {
@@ -2103,7 +2119,7 @@ namespace SRL
             slColOffsetB(offset.Red, offset.Green, offset.Blue);
         }
 
-        /** @brief Basic Options for behavior of VDP2 Half Transparent Color Calculation
+        /** @brief Options for behavior of VDP2 Half Transparent Color Calculation
          */
         enum class ColorCalcMode : uint16_t
         {
@@ -2120,7 +2136,7 @@ namespace SRL
             UseColorAddition = 0x100,
         };
       
-        /** @brief Sets VDP2 Half Transparent Color Calculation Mode (only one mode can be used at once)
+        /** @brief Sets VDP2 Half Transparent Color Calculation Mode (only one mode can be used at a time)
          * @param mode The VDP2 color calculation mode to use
          * @param extend Designates whether to extend color calculation to the top 3 Layer Priories instead of just top 2
          * @note Extended color calculation has many restrictions detailed in VDP2 users manual- not all color modes can support
