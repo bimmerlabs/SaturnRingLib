@@ -1324,6 +1324,10 @@ namespace SRL
          *      -Reading a coefficient table from VRAM allows per-line/per-pixel scaling
          *       to simulate a 3D plane.
          *      -simulate up to 2 planes using separate rotation parameters and tilemaps
+         * @note Tilemap Loading for Secondary rotation parameter through RBG0 interface does not support configuration
+         * for display on RBG1. While it is possible to control RBG1 rotation mode and perspective through
+         * the functions for the secondary parameter, the required VRAM reservations for its display would need to be
+         * configured manually.
          */
         class RBG0 : public BmpScreen<RBG0, scnRBG0, RBG0ON>
         {
@@ -1436,7 +1440,17 @@ namespace SRL
             */
             inline static CRAM::Palette TilePaletteB = CRAM::Palette();
             
-            
+            /** @brief Manually Sets VRAM area for Priamary or Secondary RBG0 Cell Data (For Advanced Use Cases)
+             * @details This function manually sets an area in VRAM for Cell Data to be loaded to. Unless the
+             * Address is obtained using VDP2::VRAM::Allocate(), the VRAM allocator will be bypassed entirely.
+             * No Checks are performed for proper data alignment or cycle conflicts. For advanced use cases only.
+             * @param address the VRAM address of the allocation
+             * @param size the size of the allocation
+             * @param param (optional) The Rotation parameter that will use this address (Defaults to Primary)
+             * @return Echoes Address
+             * @note For valid dual parameter access on RBG0, Secondary data must ALWAYS be allocated in the same
+             * bank as Primary data. This is not verified by this funciton. 
+             */
             void* SetCellAddress(void* address, int size, VDP2::RotationParameter param =VDP2::RotationParameter::Primary)
             {
                 if(param==VDP2::RotationParameter::Primary)
