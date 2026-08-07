@@ -11,7 +11,6 @@ using namespace SRL::Math;
 int main()
 {
     SRL::Core::Initialize(HighColor(20,10,50));
-    Digital port0(0); // Initialize gamepad on port 0
     
     // variables to store current position/ rotation of the 2 RBG0 tilemaps:
     Vector3D Rbg0PositionPrimary(0.0,80.0,80.0);//80 units below camera for ground

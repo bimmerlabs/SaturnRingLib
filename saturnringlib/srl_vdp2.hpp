@@ -118,10 +118,10 @@ namespace SRL
 
             /** @brief Indicates if map data has been stored in bank A0 by a previous allocation
              */ 
-            inline static bool MapBankA0 = false;
+            inline static bool MapBankA0 = true;
             /** @brief Indicates if map data has been stored in bank B0 by a previous allocation
              */ 
-            inline static bool MapBankB0 = false;
+            inline static bool MapBankB0 = true;
             
         public:
             /** @brief Gets current amount of free VRAM in a bank
@@ -217,11 +217,12 @@ namespace SRL
             /** @brief Automatically allocates map data for specified screen
              * @param info Tile map data description
              * @param screen The screen identifier
-             * @param size optional pointer to pass the resulting allocation size back to
+             * @param size Optional pointer to pass the resulting allocation size back to
              * @return Pointer to the allocated memory
-             * @note The Maximum supported allocation size is 0x20000 bytes (1 Bank).Single Allocations
-             * can not be spit between multiple banks
+             * @note The Maximum supported allocation size is 0x20000 bytes (1 Bank). Single Allocations
+             * can not be split between multiple banks.
              */
+          
             inline static void* AutoAllocateMap(Tilemap::TilemapInfo& info, int16_t screen,int* size = nullptr )
             {
                 void* alloc = nullptr;
@@ -238,7 +239,6 @@ namespace SRL
 
                 if (info.PlaneSize == PL_SIZE_2x2) page_sz <<= 2;
                 else if (info.PlaneSize == PL_SIZE_2x1) page_sz <<= 1;
-                //if(info.MapByteSize)sz = info.MapByteSize;
                 if (screen == scnRBG0) // Reserve all 8 cycles of bank 0 
                 {
                     alloc = VRAM::Allocate(sz, page_sz, VramBank::A0, 8);
@@ -2006,6 +2006,9 @@ namespace SRL
             SRL::VDP2::SpriteLayer::SetPriority(VDP2::Priority::Layer4,VDP2::SpriteBank::Bank0);
             slRparaInitSet((ROTSCROLL*)(VDP2_VRAM_B1 + 0x1ff00));
             VDP2_RAMCTL&=0xff00;
+            VDP2::VRAM::MapBankA0 = false;
+            VDP2::VRAM::MapBankB0 = false;
+            
         }
 
         /** @brief Data structure of a VDP2 color offset to be set in Offset A or Offset B

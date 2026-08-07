@@ -334,7 +334,7 @@ namespace SRL::Tilemap::Interfaces
 
             // Check that requested page indicies exist in this map:
             if (!this->mapData || sourcePage >= this->numPages || destPage >= numPages)
-              {
+            {
                 return;
             }
 
