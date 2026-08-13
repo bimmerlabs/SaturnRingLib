@@ -1,7 +1,7 @@
 /*VDP2 Color Calculation Demo:
 This Demo Shows The use of VDP2 Color Calculation and Priority through SRL and demonstrates
 its effect by creating an interactive version of color calculation diagrams found in the
-VDP2 Users Manual.
+ VDP2 Users Manual.
 
 A Blue Triangle, Green Square, and Red Circle are displayed on 3 separate VDP2 ScrollScreens.
 Priorities are set such that the Triangle draws on top, Square draws in middle, and Circle draws
@@ -161,6 +161,7 @@ class UiManager
         SRL::Debug::Print(0,CursorLine+5,"->");
 
     }
+
 };
 
 int main()
