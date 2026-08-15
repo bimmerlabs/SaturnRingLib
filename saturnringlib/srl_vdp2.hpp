@@ -881,7 +881,7 @@ namespace SRL
                 {
                     for (uint16_t j = 0; j < info.MapWidth; j++)
                     {
-                        if (info.MapMode) *VRAM++ = ((*mapData++) + mapoff) | (paloff << 12); // 1WORD datal
+                        if (info.MapMode) *VRAM++ = ((*mapData++) + mapoff) | (paloff << 12); // 1WORD data
                         else *VRAM32++ = ((*Data32++) + mapoff) | (paloff << 20); // 2WORD data
                     }
                 }

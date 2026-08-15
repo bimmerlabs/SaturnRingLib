@@ -15,10 +15,10 @@ SRL_ENABLE_FREQ_ANALYSIS = 0    # Set to 1 if you want to enable frequency analy
 SGL_MAX_VERTICES = 2500         # Number of vertices that can be used
 SGL_MAX_POLYGONS = 1500         # Number of polygons that can be used
 SGL_MAX_EVENTS = 1             	# Number of events that can be used
-SGL_MAX_WORKS = 1             	# Number of works that can be used 
+SGL_MAX_WORKS = 1             	# Number of works that can be used
 
 # Disk name
-CD_NAME = VDP2_ScrollScreen
+CD_NAME = ASCII_Fonts
 
 # Directory build will be placed into
 BUILD_DROP = ./BuildDrop
@@ -27,7 +27,7 @@ BUILD_DROP = ./BuildDrop
 SRL_INSTALL_ROOT ?= ../..
 
 # Find all .c and .cxx files
-SOURCES = $(patsubst ./%,%,$(shell find src/ -name '*.c')) 
+SOURCES = $(patsubst ./%,%,$(shell find src/ -name '*.c'))
 SOURCES += $(patsubst ./%,%,$(shell find src/ -name '*.cxx'))
 
 # Include shared makefile
